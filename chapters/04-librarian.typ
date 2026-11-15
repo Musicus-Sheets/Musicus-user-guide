@@ -76,8 +76,8 @@ Now add the parts one after another. For each part:
 - *Label*: the name musicians see, e.g. "1st Trumpet in Bb".
 - *Voice*: the number of the voice, e.g. `1` for "1st Trumpet".
 - *Key*: for transposing instruments, e.g. `Bb` or `F`.
-- *Instruments*: tick every instrument the part is for. A part "Flute /
-  Piccolo" gets both.
+- *Instruments*: click #ui("+ Add instruments") and tick every instrument
+  the part is for (@picker). A part "Flute / Piccolo" gets both.
 - Click #ui("Choose PDF…") and select the file of this part.
 
 Click #ui("+ Add part"). The part appears in the list above with the state
@@ -103,8 +103,9 @@ below). In the library such pieces show a note like *1 part without PDF*.
 Click #ui("Edit") on the piece in the library. The edit page shows:
 
 - *Details*: change them and click #ui("Save details").
-- *Parts*: every part with its fields, instruments and file. Change a part
-  and click #ui("Save part").
+- *Parts*: every part with its fields, instruments and file. Change label,
+  voice or key and click #ui("Save part"). Instruments are saved as soon as
+  you add or remove them.
 - *Add a part*: the same form as in the guided flow.
 - *Delete piece*: see @deleting.
 
@@ -115,8 +116,8 @@ Click #ui("Done") to return to the library.
 == Changing a single part <edit-part>
 
 To work on one part only, click #ui("Edit") under its preview in the
-library. Here you change label, voice, key and instruments
-(#ui("Save part")), upload its PDF (#ui("Upload PDF…")) or replace it
+library. Here you change label, voice and key (#ui("Save part")) and the
+instruments (saved at once, like on the group page), upload its PDF (#ui("Upload PDF…")) or replace it
 (#ui("Replace PDF…")). #ui("Open") shows the part in the reader.
 
 #shot("edit-part.png", [A corrected part: version 2 is current, version 1 is kept.])
@@ -139,12 +140,14 @@ groups and decides who is in them (@groups); you decide what each group may
 read.
 
 + Click #ui("Groups") in the navigation bar and select a group.
-+ Under *Instruments*, tick the instruments whose parts the group may read.
-  "Trumpets" gets "Trumpet".
-+ Under *Whole scores (e.g. for the conductor)*, tick works the group may
-  read completely, with all parts. Use the filter field to find works
-  quickly.
-+ Click #ui("Save").
++ Under *Instruments*, click #ui("+ Add instruments") and tick the
+  instruments whose parts the group may read (@picker). "Trumpets" gets
+  "Trumpet".
++ Under *Whole scores (e.g. for the conductor)*, click #ui("+ Add scores")
+  and tick works the group may read completely, with all parts. Search by
+  title or composer.
+
+Every change is saved at once; remove an entry with its #ui("×").
 
 #table(
   columns: (auto, auto, 1fr),
@@ -169,9 +172,11 @@ piece to the next directly in the reader.
 + Click #ui("Programmes") in the navigation bar, then #ui("+ New programme").
 + Enter the title of the concert, choose the date, and add notes for the
   musicians (e.g. "Meet at 18:30 for the sound check").
-+ Under *Pieces in concert order*, pick a piece under #ui("Add a piece…")
-  and click #ui("+ Add"). Repeat in playing order; a piece may appear
-  twice, e.g. as encore.
++ Under *Pieces in concert order*, click #ui("+ Add pieces"), search by
+  title or composer and tick the pieces (@picker). They are added in the
+  order you tick them. A piece may appear twice, e.g. as encore: pieces
+  already in the programme stay in the list, marked *already in the
+  programme*.
 + Change the order with #ui("↑") and #ui("↓"), remove a piece with #ui("×").
 + Click #ui("Create programme").
 
@@ -179,6 +184,12 @@ To change a programme later, open it, click #ui("Edit"), and save your
 changes with #ui("Save programme").
 
 #shot("edit-programme.png", [Editing the Christmas concert: four pieces and a note for the musicians.])
+
+#shot("programme-picker.png", [Adding two marches to the New Year concert in one go.])
+
+Unlike groups and parts, the programme is saved only with
+#ui("Create programme") or #ui("Save programme"), so you can arrange the
+order first.
 
 Musicians only see programmes in which they play at least one piece, and in
 them only their own parts.
