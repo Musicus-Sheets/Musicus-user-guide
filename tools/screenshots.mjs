@@ -1,0 +1,244 @@
+// Takes all screenshots of the user guide from a running Musicus server.
+//
+//   node tools/screenshots.mjs <admin-invite-url> <sample-sheets-dir> <images-dir>
+//
+// Needs a FRESH server (empty data directory) with the web client, and the
+// sample sheets from tools/make_sample_sheets.py. Requires Playwright
+// (`npm install playwright && npx playwright install chromium`).
+
+import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [inviteUrl, sheetsDir, outDir] = process.argv.slice(2);
+if (!inviteUrl || !sheetsDir || !outDir) {
+  console.error('usage: node tools/screenshots.mjs <admin-invite-url> <sheets-dir> <images-dir>');
+  process.exit(2);
+}
+const base = new URL(inviteUrl).origin;
+const manifest = JSON.parse(readFileSync(join(sheetsDir, 'manifest.json'), 'utf8'));
+const ADMIN_PW = 'admin-password-1';
+const PW = 'guide-password-1';
+
+// --- REST helpers (bearer token) -------------------------------------------
+async function api(method, path, token, body, raw) {
+  // A tablet user agent, so these sessions look like real devices in the account screenshot.
+  const headers = { 'user-agent': 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' };
+  if (token) headers.authorization = `Bearer ${token}`;
+  let payload;
+  if (raw) {
+    payload = raw;
+  } else if (body !== undefined) {
+    headers['content-type'] = 'application/json';
+    payload = JSON.stringify(body);
+  }
+  const r = await fetch(base + '/api' + path, { method, headers, body: payload });
+  if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${await r.text()}`);
+  return r.status === 204 ? null : r.json();
+}
+const login = async (username, password) =>
+  (await api('POST', '/auth/login', null, { username, password, bearer: true })).token;
+async function createUser(admin, username, display_name, role) {
+  const c = await api('POST', '/users', admin, { username, display_name, role });
+  await api('POST', `/auth/invites/${c.invite.token}`, null, { password: PW });
+  return c.user.id;
+}
+
+const browser = await chromium.launch();
+const shot = async (page, name, opts = {}) => {
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: join(outDir, `${name}.png`), ...opts });
+  console.log('shot', name);
+};
+
+// --- Admin: first login through the invite link ------------------------------
+const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36';
+const TABLET_UA = 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+const desktop = { viewport: { width: 1280, height: 820 }, deviceScaleFactor: 1.5, userAgent: UA };
+// Screenshot of the centred login/invite card with some margin.
+async function shotCard(page, name) {
+  await page.waitForTimeout(300);
+  const b = await page.locator('.card').first().boundingBox();
+  const m = 28;
+  await page.screenshot({ path: join(outDir, `${name}.png`), clip: { x: b.x - m, y: b.y - m, width: b.width + 2 * m, height: b.height + 2 * m } });
+  console.log('shot', name);
+}
+const adminCtx = await browser.newContext(desktop);
+const a = await adminCtx.newPage();
+await a.goto(inviteUrl);
+await a.getByLabel('New password (at least 8 characters)').fill(ADMIN_PW);
+await a.getByLabel('Repeat password').fill(ADMIN_PW);
+await shotCard(a, 'admin-invite');
+await a.getByRole('button', { name: 'Set password and log in' }).click();
+await a.getByRole('heading', { name: 'Library' }).waitFor();
+await shot(a, 'admin-empty-library');
+
+// --- Example data through the API -------------------------------------------
+const admin = await login('admin', ADMIN_PW);
+const instruments = {};
+for (const [name, family] of [['Trumpet', 'Brass'], ['Trombone', 'Brass'], ['Flute', 'Woodwind'], ['Clarinet', 'Woodwind']]) {
+  instruments[name] = (await api('POST', '/instruments', admin, { name, family })).id;
+}
+const anna = await createUser(admin, 'anna', 'Anna Berger', 'member');
+const ben = await createUser(admin, 'ben', 'Ben Keller', 'member');
+const tom = await createUser(admin, 'tom', 'Tom Wagner', 'member');
+const carla = await createUser(admin, 'carla', 'Carla Neumann', 'librarian');
+const maria = await createUser(admin, 'maria', 'Maria Hofer', 'member');
+await api('POST', '/users', admin, { username: 'lena', display_name: 'Lena Schmid', role: 'member' });
+
+const scoreIds = [];
+const partIds = {};
+for (const [si, s] of manifest.scores.entries()) {
+  const score = await api('POST', '/scores', admin, {
+    title: s.title, composer: s.composer, arranger: s.arranger ?? null, genre: s.genre, tags: s.tags,
+  });
+  scoreIds.push(score.id);
+  for (const [pi, p] of manifest.parts.entries()) {
+    const part = await api('POST', `/scores/${score.id}/parts`, admin, {
+      label: p.label, instrument_ids: [instruments[p.instrument]], voice: p.voice, transposition: p.transposition,
+    });
+    partIds[`${si}-${pi}`] = part.id;
+    await api('PUT', `/parts/${part.id}/file`, admin, undefined, readFileSync(join(sheetsDir, `score${si}-part${pi}.pdf`)));
+  }
+}
+const group = async (name, members, instr, scores = []) => {
+  const g = await api('POST', '/groups', admin, { name });
+  await api('PUT', `/groups/${g.id}/members`, admin, { ids: members });
+  await api('PUT', `/groups/${g.id}/instrument-grants`, admin, { ids: instr.map((i) => instruments[i]) });
+  await api('PUT', `/groups/${g.id}/score-grants`, admin, { ids: scores });
+};
+await group('Trumpets', [anna, tom], ['Trumpet']);
+await group('Flutes', [ben], ['Flute']);
+await group('Low brass', [], ['Trombone']);
+await group('Conductor', [maria], [], scoreIds);
+const prog = await api('POST', '/programmes', admin, { title: 'Christmas Concert 2026', date: '2026-12-20', notes: 'Meet at 18:30 for the sound check.' });
+await api('PUT', `/programmes/${prog.id}/items`, admin, { ids: [scoreIds[3], scoreIds[0], scoreIds[2], scoreIds[1]] });
+const prog2 = await api('POST', '/programmes', admin, { title: 'New Year Concert 2027', date: '2027-01-01' });
+await api('PUT', `/programmes/${prog2.id}/items`, admin, { ids: [scoreIds[2], scoreIds[1]] });
+
+// --- Admin / librarian pages -------------------------------------------------
+await a.goto(base + '/manage');
+await a.getByText('Florentiner Marsch').first().waitFor();
+await shot(a, 'manage-overview');
+await a.goto(`${base}/manage/scores/${scoreIds[0]}`);
+await a.locator('.part-editor').first().waitFor();
+await shot(a, 'manage-score');
+await a.locator('.part-editor').nth(1).screenshot({ path: join(outDir, 'manage-part.png') });
+console.log('shot', 'manage-part');
+await a.goto(`${base}/manage/programmes/${prog.id}`);
+await a.getByText('Pieces in concert order').waitFor();
+await shot(a, 'manage-programme');
+await a.goto(base + '/manage/groups');
+await a.locator('.selectable li', { hasText: 'Trumpets' }).click();
+await a.getByRole('heading', { name: 'Trumpets' }).waitFor();
+await shot(a, 'manage-groups', { fullPage: true });
+await a.goto(base + '/manage/users');
+await a.getByPlaceholder('Username').fill('paul');
+await a.getByPlaceholder('Display name').fill('Paul Fischer');
+await a.getByRole('button', { name: 'Create and get invite link' }).click();
+await a.locator('.card.highlight').waitFor();
+await shot(a, 'manage-users', { fullPage: true });
+
+// --- Member pages -------------------------------------------------------------
+const memberCtx = await browser.newContext(desktop);
+const m = await memberCtx.newPage();
+await m.goto(base + '/login');
+await m.getByLabel('Username').fill('anna');
+await m.getByLabel('Password').fill(PW);
+await shotCard(m, 'login');
+await m.getByRole('button', { name: 'Log in' }).click();
+await m.getByText('Florentiner Marsch').first().waitFor();
+await m.waitForTimeout(1000);
+await shot(m, 'member-library');
+await m.getByPlaceholder('Search title, composer, tag…').fill('strauss');
+await m.waitForTimeout(900);
+await shot(m, 'member-search');
+await m.goto(base + '/programmes');
+await m.getByText('Christmas Concert 2026').waitFor();
+await shot(m, 'member-programmes');
+await m.getByRole('link', { name: /Christmas Concert 2026/ }).click();
+await m.getByText(/sheets ready/).waitFor({ timeout: 30000 });
+await m.waitForTimeout(800);
+await shot(m, 'member-programme');
+await m.goto(base + '/account');
+await m.getByText('Logged-in devices').waitFor();
+await shot(m, 'member-account');
+
+// --- Reader on a tablet ------------------------------------------------------
+const tablet = await browser.newContext({ viewport: { width: 834, height: 1112 }, deviceScaleFactor: 1.5, userAgent: TABLET_UA });
+const t = await tablet.newPage();
+t.on('dialog', (d) => d.accept('Breathe here!'));
+await t.goto(base + '/login');
+await t.getByLabel('Username').fill('anna');
+await t.getByLabel('Password').fill(PW);
+await t.getByRole('button', { name: 'Log in' }).click();
+await t.getByText('Florentiner Marsch').first().waitFor();
+await t.goto(`${base}/programmes/${prog.id}/parts/${partIds['0-1']}`);
+const rendered = async () => {
+  await t.waitForFunction(() => {
+    const c = document.getElementById('page-canvas');
+    return c && c.style.width !== '';
+  }, null, { timeout: 30000 });
+  await t.waitForTimeout(600);
+};
+await rendered();
+await shot(t, 'reader');
+
+await t.getByRole('button', { name: /Draw/ }).click();
+const box = await t.locator('#ink-canvas').boundingBox();
+const at = (fx, fy) => [box.x + box.width * fx, box.y + box.height * fy];
+async function stroke(points) {
+  await t.mouse.move(...at(...points[0]));
+  await t.mouse.down();
+  for (const p of points.slice(1)) await t.mouse.move(...at(...p), { steps: 6 });
+  await t.mouse.up();
+}
+// A red circle around a bar.
+const circle = [];
+for (let i = 0; i <= 24; i += 1) circle.push([0.42 + 0.09 * Math.cos(i / 24 * 2 * Math.PI), 0.32 + 0.035 * Math.sin(i / 24 * 2 * Math.PI)]);
+await stroke(circle);
+// Highlight a line.
+await t.getByRole('button', { name: 'Highlighter' }).click();
+await stroke([[0.1, 0.495], [0.88, 0.495]]);
+// Blue pen: a "cresc." hairpin.
+await t.getByRole('button', { name: 'Pen' }).click();
+await t.locator('button.swatch[title="Blue"]').click();
+await stroke([[0.55, 0.62], [0.8, 0.605]]);
+await stroke([[0.55, 0.62], [0.8, 0.635]]);
+// A sharp and a glasses stamp, and a text note.
+await t.locator('select.stamps').selectOption({ index: 4 });
+await t.mouse.click(...at(0.3, 0.215));
+await t.locator('select.stamps').selectOption({ index: 3 });
+await t.mouse.click(...at(0.08, 0.40));
+await t.getByRole('button', { name: 'Text' }).click();
+await t.mouse.click(...at(0.12, 0.74));
+await t.locator('.save-status', { hasText: /^Saved$/ }).waitFor({ timeout: 15000 });
+await shot(t, 'reader-draw');
+await t.getByRole('button', { name: /Done/ }).click();
+await t.getByTitle('Annotation sets').click();
+await t.getByRole('heading', { name: 'Annotation sets' }).waitFor();
+await shot(t, 'reader-sets');
+await t.getByRole('button', { name: 'Close' }).click();
+
+// A corrected upload: the set now belongs to an older version.
+await api('PUT', `/parts/${partIds['0-1']}/file`, admin, undefined, readFileSync(join(sheetsDir, 'score0-part1-v2.pdf')));
+await t.reload();
+await rendered();
+await t.getByText('Move them to the current version').waitFor();
+await shot(t, 'reader-version');
+
+// --- Phone ------------------------------------------------------------------
+const phone = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, userAgent: TABLET_UA.replace('iPad', 'iPhone') });
+const ph = await phone.newPage();
+await ph.goto(base + '/login');
+await ph.getByLabel('Username').fill('ben');
+await ph.getByLabel('Password').fill(PW);
+await ph.getByRole('button', { name: 'Log in' }).click();
+await ph.getByText('Florentiner Marsch').first().waitFor();
+await ph.waitForTimeout(900);
+await shot(ph, 'phone-library');
+await ph.getByRole('button', { name: 'Menu' }).click();
+await shot(ph, 'phone-menu');
+
+await browser.close();
+console.log('done', { carla, ben, tom, maria });
