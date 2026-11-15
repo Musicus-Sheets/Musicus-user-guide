@@ -109,11 +109,13 @@ for (const [u, d] of [['jonas', 'Jonas Bauer'], ['sophie', 'Sophie Wimmer'], ['l
 
 const scoreIds = [];
 const partIds = {};
+// Parts get no custom name: Musicus derives it from instrument, key and voice.
+const partName = (p) => `${p.instrument}${p.transposition ? ` in ${p.transposition.replace('b', '♭')}` : ''}${p.voice ? ` ${p.voice}` : ''}`;
 async function addParts(si, scoreId, which) {
   for (const pi of which) {
     const p = manifest.parts[pi];
     const part = await api('POST', `/scores/${scoreId}/parts`, admin, {
-      label: p.label, instrument_ids: [instruments[p.instrument]], voice: p.voice, transposition: p.transposition,
+      instrument_ids: [instruments[p.instrument]], voice: p.voice == null ? null : String(p.voice), transposition: p.transposition,
     });
     partIds[`${si}-${pi}`] = part.id;
     await api('PUT', `/parts/${part.id}/file`, admin, undefined, readFileSync(join(sheetsDir, `score${si}-part${pi}.pdf`)));
@@ -145,26 +147,27 @@ await a.getByRole('button', { name: 'Next: parts' }).click();
 const form = a.locator('form.new-part');
 for (const pi of [0, 1, 2]) {
   const p = manifest.parts[pi];
-  await form.getByLabel('Label').fill(p.label);
-  if (p.voice) await form.getByLabel('Voice').fill(String(p.voice));
-  if (p.transposition) await form.getByLabel('Key').fill(p.transposition);
   await pickEntries(a, form, '+ Add instruments', [p.instrument]);
+  if (p.transposition) await form.getByLabel('Key').selectOption(p.transposition);
+  if (p.voice) await form.getByLabel('Voice').fill(String(p.voice));
   await form.locator('input[type=file]').setInputFiles(join(sheetsDir, `score${lastIndex}-part${pi}.pdf`));
   await form.getByRole('button', { name: '+ Add part' }).click();
-  await a.locator('.added-parts li', { hasText: p.label }).getByText(/Version 1/).waitFor({ timeout: 30000 });
+  await a.locator('.added-parts li', { hasText: partName(p) }).getByText(/Version 1/).waitFor({ timeout: 30000 });
 }
-// The next part typed in, ready to be added.
-await form.getByLabel('Label').fill(manifest.parts[3].label);
-await form.getByLabel('Key').fill('Bb');
+// The next part entered, ready to be added: the name is shown live.
 await pickEntries(a, form, '+ Add instruments', ['Clarinet']);
+await form.getByLabel('Key').selectOption('Bb');
+await form.getByLabel('Voice').fill('1');
 await a.evaluate(() => window.scrollTo(0, 0));
 await shot(a, 'add-piece-parts', { fullPage: true });
-await form.getByLabel('Label').fill('');
 await a.getByRole('button', { name: 'Finish' }).click();
 await a.locator('.score.focus').waitFor();
 const created = (await api('GET', '/scores', admin)).find((x) => x.title === last.title);
 scoreIds.push(created.id);
-for (const [i, part] of created.parts.entries()) partIds[`${lastIndex}-${i}`] = part.id;
+for (const [pi, p] of manifest.parts.entries()) {
+  const part = created.parts.find((x) => x.display_name === partName(p));
+  if (part) partIds[`${lastIndex}-${pi}`] = part.id;
+}
 await addParts(lastIndex, created.id, [3, 4]);
 
 const group = async (name, members, instr, scores = []) => {

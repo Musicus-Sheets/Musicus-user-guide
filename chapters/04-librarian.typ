@@ -73,19 +73,39 @@ find all encore pieces.
 
 Now add the parts one after another. For each part:
 
-- *Label*: the name musicians see, e.g. "1st Trumpet in Bb".
-- *Voice*: the number of the voice, e.g. `1` for "1st Trumpet".
-- *Key*: for transposing instruments, e.g. `Bb` or `F`.
 - *Instruments*: click #ui("+ Add instruments") and tick every instrument
   the part is for (@picker). A part "Flute / Piccolo" gets both.
+- *Key*: for transposing instruments, choose the key from the list: B♭,
+  E♭, F, C, A, D, G, E, A♭, D♭, G♭ or B♮ (H). Leave it at
+  #ui("— (concert pitch)") for instruments that are not transposing.
+- *Voice*: the voice or chair, e.g. `1` for the first trumpet. Letters are
+  fine too, e.g. `1a` or `Solo`.
+- *Custom name (optional)*: usually leave it empty (see below).
 - Click #ui("Choose PDF…") and select the file of this part.
+
+Musicus names the part after its instruments, key and voice and shows the
+name under the fields (*Shown as*) while you type:
+
+#table(
+  columns: (auto, auto, auto, 1fr),
+  [Instruments], [Key], [Voice], [Name],
+  [Trumpet], [B♭], [1], [Trumpet in B♭ 1],
+  [Clarinet], [B♭], [2], [Clarinet in B♭ 2],
+  [Horn], [F], [3a], [Horn in F 3a],
+  [Flute, Piccolo], [—], [—], [Flute / Piccolo],
+)
+
+This name appears everywhere: in the library, in programmes and in the
+reader. Only if your ensemble calls a part differently, e.g. "Solo Cornet",
+type that into *Custom name (optional)*; it then replaces the derived name.
+If you later rename an instrument, the derived names change with it.
 
 Click #ui("+ Add part"). The part appears in the list above with the state
 of its upload: first *Uploading…*, then its version and number of pages.
 The form is empty again, so you can type the next part while the upload
 is still running.
 
-#shot("add-piece-parts.png", [Step 2: three parts are uploaded, the fourth is being entered.])
+#shot("add-piece-parts.png", [Step 2: three parts are uploaded; the fourth will be shown as "Clarinet in B♭ 1".])
 
 When all parts are there, click #ui("Finish"). Musicus waits for running
 uploads, then shows the library with the new piece highlighted.
@@ -103,9 +123,9 @@ below). In the library such pieces show a note like *1 part without PDF*.
 Click #ui("Edit") on the piece in the library. The edit page shows:
 
 - *Details*: change them and click #ui("Save details").
-- *Parts*: every part with its fields, instruments and file. Change label,
-  voice or key and click #ui("Save part"). Instruments are saved as soon as
-  you add or remove them.
+- *Parts*: every part under its name, with its instruments, fields and
+  file. Change key, voice or custom name and click #ui("Save part").
+  Instruments are saved as soon as you add or remove them.
 - *Add a part*: the same form as in the guided flow.
 - *Delete piece*: see @deleting.
 
@@ -116,7 +136,7 @@ Click #ui("Done") to return to the library.
 == Changing a single part <edit-part>
 
 To work on one part only, click #ui("Edit") under its preview in the
-library. Here you change label, voice and key (#ui("Save part")) and the
+library. Here you change key, voice and custom name (#ui("Save part")) and the
 instruments (saved at once, like on the group page), upload its PDF (#ui("Upload PDF…")) or replace it
 (#ui("Replace PDF…")). #ui("Open") shows the part in the reader.
 
