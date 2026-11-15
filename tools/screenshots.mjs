@@ -88,19 +88,63 @@ await api('POST', '/users', admin, { username: 'lena', display_name: 'Lena Schmi
 
 const scoreIds = [];
 const partIds = {};
-for (const [si, s] of manifest.scores.entries()) {
-  const score = await api('POST', '/scores', admin, {
-    title: s.title, composer: s.composer, arranger: s.arranger ?? null, genre: s.genre, tags: s.tags,
-  });
-  scoreIds.push(score.id);
-  for (const [pi, p] of manifest.parts.entries()) {
-    const part = await api('POST', `/scores/${score.id}/parts`, admin, {
+async function addParts(si, scoreId, which) {
+  for (const pi of which) {
+    const p = manifest.parts[pi];
+    const part = await api('POST', `/scores/${scoreId}/parts`, admin, {
       label: p.label, instrument_ids: [instruments[p.instrument]], voice: p.voice, transposition: p.transposition,
     });
     partIds[`${si}-${pi}`] = part.id;
     await api('PUT', `/parts/${part.id}/file`, admin, undefined, readFileSync(join(sheetsDir, `score${si}-part${pi}.pdf`)));
   }
 }
+const allParts = manifest.parts.map((_, i) => i);
+// The last score is added through the guided flow below, the others directly.
+for (const [si, s] of manifest.scores.slice(0, -1).entries()) {
+  const score = await api('POST', '/scores', admin, {
+    title: s.title, composer: s.composer, arranger: s.arranger ?? null, genre: s.genre, tags: s.tags,
+  });
+  scoreIds.push(score.id);
+  await addParts(si, score.id, allParts);
+}
+
+// --- Librarian: adding a piece with the guided flow ---------------------------
+const lastIndex = manifest.scores.length - 1;
+const last = manifest.scores[lastIndex];
+await a.goto(base + '/');
+await a.getByRole('link', { name: 'Add piece' }).click();
+await a.getByRole('heading', { name: 'Add piece' }).waitFor();
+await a.getByLabel('Title', { exact: true }).fill(last.title);
+await a.getByLabel('Composer').fill(last.composer);
+await a.getByLabel('Arranger').fill(last.arranger ?? '');
+await a.getByLabel('Genre').fill(last.genre);
+await a.getByLabel('Tags (comma separated)').fill(last.tags.join(', '));
+await shot(a, 'add-piece-details');
+await a.getByRole('button', { name: 'Next: parts' }).click();
+const form = a.locator('form.new-part');
+for (const pi of [0, 1, 2]) {
+  const p = manifest.parts[pi];
+  await form.getByLabel('Label').fill(p.label);
+  if (p.voice) await form.getByLabel('Voice').fill(String(p.voice));
+  if (p.transposition) await form.getByLabel('Key').fill(p.transposition);
+  await form.locator('label.check', { hasText: p.instrument }).locator('input').check();
+  await form.locator('input[type=file]').setInputFiles(join(sheetsDir, `score${lastIndex}-part${pi}.pdf`));
+  await form.getByRole('button', { name: '+ Add part' }).click();
+  await a.locator('.added-parts li', { hasText: p.label }).getByText(/Version 1/).waitFor({ timeout: 30000 });
+}
+// The next part typed in, ready to be added.
+await form.getByLabel('Label').fill(manifest.parts[3].label);
+await form.getByLabel('Key').fill('Bb');
+await form.locator('label.check', { hasText: 'Clarinet' }).locator('input').check();
+await shot(a, 'add-piece-parts', { fullPage: true });
+await form.getByLabel('Label').fill('');
+await a.getByRole('button', { name: 'Finish' }).click();
+await a.locator('.score.focus').waitFor();
+const created = (await api('GET', '/scores', admin)).find((x) => x.title === last.title);
+scoreIds.push(created.id);
+for (const [i, part] of created.parts.entries()) partIds[`${lastIndex}-${i}`] = part.id;
+await addParts(lastIndex, created.id, [3, 4]);
+
 const group = async (name, members, instr, scores = []) => {
   const g = await api('POST', '/groups', admin, { name });
   await api('PUT', `/groups/${g.id}/members`, admin, { ids: members });
@@ -117,27 +161,30 @@ const prog2 = await api('POST', '/programmes', admin, { title: 'New Year Concert
 await api('PUT', `/programmes/${prog2.id}/items`, admin, { ids: [scoreIds[2], scoreIds[1]] });
 
 // --- Admin / librarian pages -------------------------------------------------
-await a.goto(base + '/manage');
+await a.goto(base + '/');
 await a.getByText('Florentiner Marsch').first().waitFor();
-await shot(a, 'manage-overview');
-await a.goto(`${base}/manage/scores/${scoreIds[0]}`);
+await a.waitForTimeout(800);
+await shot(a, 'librarian-library');
+await a.goto(`${base}/scores/${scoreIds[0]}/edit`);
 await a.locator('.part-editor').first().waitFor();
-await shot(a, 'manage-score');
-await a.locator('.part-editor').nth(1).screenshot({ path: join(outDir, 'manage-part.png') });
-console.log('shot', 'manage-part');
-await a.goto(`${base}/manage/programmes/${prog.id}`);
+await shot(a, 'edit-piece');
+await a.goto(base + '/instruments');
+await a.locator('.instrument-list .row', { hasText: 'Trumpet' }).waitFor();
+await shot(a, 'instruments');
+await a.goto(`${base}/programmes/${prog.id}/edit`);
 await a.getByText('Pieces in concert order').waitFor();
-await shot(a, 'manage-programme');
-await a.goto(base + '/manage/groups');
+await a.locator('ol.items li').first().waitFor();
+await shot(a, 'edit-programme', { fullPage: true });
+await a.goto(base + '/groups');
 await a.locator('.selectable li', { hasText: 'Trumpets' }).click();
 await a.getByRole('heading', { name: 'Trumpets' }).waitFor();
-await shot(a, 'manage-groups', { fullPage: true });
-await a.goto(base + '/manage/users');
+await shot(a, 'groups', { fullPage: true });
+await a.goto(base + '/users');
 await a.getByPlaceholder('Username').fill('paul');
 await a.getByPlaceholder('Display name').fill('Paul Fischer');
 await a.getByRole('button', { name: 'Create and get invite link' }).click();
 await a.locator('.card.highlight').waitFor();
-await shot(a, 'manage-users', { fullPage: true });
+await shot(a, 'users', { fullPage: true });
 
 // --- Member pages -------------------------------------------------------------
 const memberCtx = await browser.newContext(desktop);
@@ -226,6 +273,11 @@ await t.reload();
 await rendered();
 await t.getByText('Move them to the current version').waitFor();
 await shot(t, 'reader-version');
+
+// The corrected part in its edit view, with both versions.
+await a.goto(`${base}/parts/${partIds['0-1']}/edit`);
+await a.getByText('All versions (2)').waitFor();
+await shot(a, 'edit-part');
 
 // --- Phone ------------------------------------------------------------------
 const phone = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, userAgent: TABLET_UA.replace('iPad', 'iPhone') });
