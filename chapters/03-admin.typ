@@ -87,15 +87,45 @@ trumpeter who also plays flugelhorn.
 + Click #ui("Groups") in the navigation bar.
 + Type a name into *New group, e.g. Trumpets* and click #ui("Add").
 + Select the group in the list on the left.
-+ Under *Members*, tick everybody who belongs to it.
++ Under *Members*, click #ui("+ Add members"), tick everybody who belongs to
+  the group and click #ui("Add …") (see @picker).
 + Choose what the group may read (this part can also be done by librarians,
   see @access).
-+ Click #ui("Save").
 
-#shot("groups.png", [The group "Trumpets": two members, access to all trumpet parts.])
+#shot("groups.png", [The group "Trumpets": two members, access to trumpet and flugelhorn parts.])
 
-Changes take effect immediately: removed members lose access with their next
-click, new members see the music right away.
+There is no Save button on this page: every change is saved at once and
+confirmed with a short *Saved*. Removed members lose access with their next
+click, new members see the music right away. If saving fails, Musicus shows
+the reason and puts the list back as it was.
+
+=== Choosing from a list <picker>
+
+Wherever Musicus assigns something to something else (members to a group,
+instruments and whole scores to a group, instruments to a part, pieces to a
+programme), it shows what is assigned as a row of labels, each with a
+#ui("×") to remove it, and a button such as #ui("+ Add members") to add
+more.
+
++ Click the button. A list opens with a search field; you can type at once.
++ Type a part of a name, e.g. "ber" for every Berger and Bernhard. Capitals
+  and accents do not matter: "zoe" finds "Zoë". Instruments are also found
+  by their family ("wood"), pieces by their composer.
++ Tick every entry you want. The list stays open, so you can search again
+  and tick more; the bottom line counts what you ticked.
++ Click #ui("Add …") (e.g. #ui("Add 2")), or simply tap or click anywhere
+  outside the list. Everything ticked is added.
+
+#shot("groups-picker.png", [Adding members: "er" typed, two musicians ticked, #ui("Add 2") adds both.])
+
+With a keyboard: #kbd("↓") moves from the search field into the list,
+#kbd("↑") and #kbd("↓") move between entries, #kbd("Space") or #kbd("Enter")
+ticks, #kbd("Enter") in the search field ticks the first match, and
+#kbd("Esc") closes the list and adds what is ticked, just like a click
+outside. There is no "cancel": untick an entry before closing, or remove it
+afterwards with its #ui("×").
+
+#shot("phone-picker.png", [On a phone the list opens at the top of the screen, above the keyboard.], width: 45%)
 
 == If you lose the admin password
 

@@ -63,6 +63,17 @@ async function shotCard(page, name) {
   await page.screenshot({ path: join(outDir, `${name}.png`), clip: { x: b.x - m, y: b.y - m, width: b.width + 2 * m, height: b.height + 2 * m } });
   console.log('shot', name);
 }
+// Opens an assignment picker, ticks the named entries (searching each) and applies them.
+async function pickEntries(page, scope, button, names) {
+  await scope.getByRole('button', { name: button }).click();
+  const panel = page.locator('.picker-panel');
+  for (const name of names) {
+    await panel.getByRole('combobox').fill(name);
+    await panel.getByRole('option', { name }).first().click();
+  }
+  await panel.getByRole('button', { name: /^Add \d+$/ }).click();
+  await panel.waitFor({ state: 'detached' });
+}
 const adminCtx = await browser.newContext(desktop);
 const a = await adminCtx.newPage();
 await a.goto(inviteUrl);
@@ -76,7 +87,11 @@ await shot(a, 'admin-empty-library');
 // --- Example data through the API -------------------------------------------
 const admin = await login('admin', ADMIN_PW);
 const instruments = {};
-for (const [name, family] of [['Trumpet', 'Brass'], ['Trombone', 'Brass'], ['Flute', 'Woodwind'], ['Clarinet', 'Woodwind']]) {
+// A realistic wind band, so the assignment pickers have something to search.
+for (const [name, family] of [['Trumpet', 'Brass'], ['Trombone', 'Brass'], ['Flute', 'Woodwind'], ['Clarinet', 'Woodwind'],
+  ['Flugelhorn', 'Brass'], ['French horn', 'Brass'], ['Euphonium', 'Brass'], ['Tuba', 'Brass'], ['Piccolo', 'Woodwind'],
+  ['Oboe', 'Woodwind'], ['Bassoon', 'Woodwind'], ['Alto saxophone', 'Woodwind'], ['Tenor saxophone', 'Woodwind'],
+  ['Drum kit', 'Percussion'], ['Glockenspiel', 'Percussion'], ['Timpani', 'Percussion']]) {
   instruments[name] = (await api('POST', '/instruments', admin, { name, family })).id;
 }
 const anna = await createUser(admin, 'anna', 'Anna Berger', 'member');
@@ -85,14 +100,22 @@ const tom = await createUser(admin, 'tom', 'Tom Wagner', 'member');
 const carla = await createUser(admin, 'carla', 'Carla Neumann', 'librarian');
 const maria = await createUser(admin, 'maria', 'Maria Hofer', 'member');
 await api('POST', '/users', admin, { username: 'lena', display_name: 'Lena Schmid', role: 'member' });
+// More musicians, so the member picker has a realistic list.
+for (const [u, d] of [['jonas', 'Jonas Bauer'], ['sophie', 'Sophie Wimmer'], ['lukas', 'Lukas Huber'], ['eva', 'Eva Gruber'],
+  ['felix', 'Felix Brandstätter'], ['julia', 'Julia Moser'], ['david', 'David Pichler'], ['hanna', 'Hanna Steiner'],
+  ['niklas', 'Niklas Mayr'], ['zoe', 'Zoë Lechner'], ['matthias', 'Matthias Berger'], ['clara', 'Clara Aigner']]) {
+  await createUser(admin, u, d, 'member');
+}
 
 const scoreIds = [];
 const partIds = {};
+// Parts get no custom name: Musicus derives it from instrument, key and voice.
+const partName = (p) => `${p.instrument}${p.transposition ? ` in ${p.transposition.replace('b', '♭')}` : ''}${p.voice ? ` ${p.voice}` : ''}`;
 async function addParts(si, scoreId, which) {
   for (const pi of which) {
     const p = manifest.parts[pi];
     const part = await api('POST', `/scores/${scoreId}/parts`, admin, {
-      label: p.label, instrument_ids: [instruments[p.instrument]], voice: p.voice, transposition: p.transposition,
+      instrument_ids: [instruments[p.instrument]], voice: p.voice == null ? null : String(p.voice), transposition: p.transposition,
     });
     partIds[`${si}-${pi}`] = part.id;
     await api('PUT', `/parts/${part.id}/file`, admin, undefined, readFileSync(join(sheetsDir, `score${si}-part${pi}.pdf`)));
@@ -124,25 +147,27 @@ await a.getByRole('button', { name: 'Next: parts' }).click();
 const form = a.locator('form.new-part');
 for (const pi of [0, 1, 2]) {
   const p = manifest.parts[pi];
-  await form.getByLabel('Label').fill(p.label);
+  await pickEntries(a, form, '+ Add instruments', [p.instrument]);
+  if (p.transposition) await form.getByLabel('Key').selectOption(p.transposition);
   if (p.voice) await form.getByLabel('Voice').fill(String(p.voice));
-  if (p.transposition) await form.getByLabel('Key').fill(p.transposition);
-  await form.locator('label.check', { hasText: p.instrument }).locator('input').check();
   await form.locator('input[type=file]').setInputFiles(join(sheetsDir, `score${lastIndex}-part${pi}.pdf`));
   await form.getByRole('button', { name: '+ Add part' }).click();
-  await a.locator('.added-parts li', { hasText: p.label }).getByText(/Version 1/).waitFor({ timeout: 30000 });
+  await a.locator('.added-parts li', { hasText: partName(p) }).getByText(/Version 1/).waitFor({ timeout: 30000 });
 }
-// The next part typed in, ready to be added.
-await form.getByLabel('Label').fill(manifest.parts[3].label);
-await form.getByLabel('Key').fill('Bb');
-await form.locator('label.check', { hasText: 'Clarinet' }).locator('input').check();
+// The next part entered, ready to be added: the name is shown live.
+await pickEntries(a, form, '+ Add instruments', ['Clarinet']);
+await form.getByLabel('Key').selectOption('Bb');
+await form.getByLabel('Voice').fill('1');
+await a.evaluate(() => window.scrollTo(0, 0));
 await shot(a, 'add-piece-parts', { fullPage: true });
-await form.getByLabel('Label').fill('');
 await a.getByRole('button', { name: 'Finish' }).click();
 await a.locator('.score.focus').waitFor();
 const created = (await api('GET', '/scores', admin)).find((x) => x.title === last.title);
 scoreIds.push(created.id);
-for (const [i, part] of created.parts.entries()) partIds[`${lastIndex}-${i}`] = part.id;
+for (const [pi, p] of manifest.parts.entries()) {
+  const part = created.parts.find((x) => x.display_name === partName(p));
+  if (part) partIds[`${lastIndex}-${pi}`] = part.id;
+}
 await addParts(lastIndex, created.id, [3, 4]);
 
 const group = async (name, members, instr, scores = []) => {
@@ -151,7 +176,7 @@ const group = async (name, members, instr, scores = []) => {
   await api('PUT', `/groups/${g.id}/instrument-grants`, admin, { ids: instr.map((i) => instruments[i]) });
   await api('PUT', `/groups/${g.id}/score-grants`, admin, { ids: scores });
 };
-await group('Trumpets', [anna, tom], ['Trumpet']);
+await group('Trumpets', [anna, tom], ['Trumpet', 'Flugelhorn']);
 await group('Flutes', [ben], ['Flute']);
 await group('Low brass', [], ['Trombone']);
 await group('Conductor', [maria], [], scoreIds);
@@ -178,7 +203,33 @@ await shot(a, 'edit-programme', { fullPage: true });
 await a.goto(base + '/groups');
 await a.locator('.selectable li', { hasText: 'Trumpets' }).click();
 await a.getByRole('heading', { name: 'Trumpets' }).waitFor();
+await a.locator('.chip').first().waitFor();
 await shot(a, 'groups', { fullPage: true });
+// The member picker open: a search typed, two people ticked.
+await a.getByRole('button', { name: '+ Add members' }).click();
+const panel = a.locator('.picker-panel');
+await panel.getByRole('combobox').fill('Ber');
+await panel.getByRole('option', { name: /Matthias Berger/ }).click();
+await panel.getByRole('combobox').fill('');
+await panel.getByRole('option', { name: /Sophie Wimmer/ }).click();
+await panel.getByRole('combobox').fill('er');
+await shot(a, 'groups-picker');
+await panel.getByRole('button', { name: 'Add 2' }).click();
+await a.locator('.assign-actions .ok', { hasText: 'Saved' }).waitFor();
+// Undo, so the example data stays as described.
+for (const n of ['Matthias Berger', 'Sophie Wimmer']) {
+  await a.getByRole('button', { name: `Remove ${n}` }).click();
+  await a.locator('.assign-actions .ok', { hasText: 'Saved' }).waitFor();
+}
+// Programme pieces from the picker.
+await a.goto(`${base}/programmes/${prog2.id}/edit`);
+await a.locator('ol.items li').first().waitFor();
+await a.getByRole('button', { name: '+ Add pieces' }).click();
+await a.locator('.picker-panel').getByRole('combobox').fill('marsch');
+await a.locator('.picker-panel').getByRole('option', { name: /Radetzky/ }).click();
+await a.locator('.picker-panel').getByRole('option', { name: /Florentiner/ }).click();
+await shot(a, 'programme-picker');
+await a.keyboard.press('Escape');
 await a.goto(base + '/users');
 await a.getByPlaceholder('Username').fill('paul');
 await a.getByPlaceholder('Display name').fill('Paul Fischer');
@@ -291,6 +342,22 @@ await ph.waitForTimeout(900);
 await shot(ph, 'phone-library');
 await ph.getByRole('button', { name: 'Menu' }).click();
 await shot(ph, 'phone-menu');
+
+// The picker on a phone (as the admin).
+const adminPhone = await phone.browser().newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, userAgent: TABLET_UA.replace('iPad', 'iPhone') });
+const ap = await adminPhone.newPage();
+await ap.goto(base + '/login');
+await ap.getByLabel('Username').fill('admin');
+await ap.getByLabel('Password').fill(ADMIN_PW);
+await ap.getByRole('button', { name: 'Log in' }).click();
+await ap.getByRole('heading', { name: 'Library' }).waitFor();
+await ap.goto(base + '/groups');
+await ap.locator('.selectable li', { hasText: 'Flutes' }).click();
+await ap.getByRole('button', { name: '+ Add instruments' }).click();
+await ap.locator('.picker-panel').getByRole('combobox').fill('wood');
+await ap.locator('.picker-panel').getByRole('option', { name: /Piccolo/ }).click();
+await shot(ap, 'phone-picker');
+await ap.keyboard.press('Escape');
 
 await browser.close();
 console.log('done', { carla, ben, tom, maria });
