@@ -5,17 +5,24 @@
 
 As librarian you keep the library in order: you add works and their parts,
 upload the PDF files, decide which group reads which music, and put
-together the concert programmes. All of this is under #ui("Manage").
+together the concert programmes.
 
-#shot("manage-overview.png", [#ui("Manage") → #ui("Library & programmes"): scores on the left, programmes and instruments on the right.])
+You do all of this in the pages every musician uses. Where something can
+be changed, you see an extra button: #ui("+ Add piece") and #ui("Edit") in
+the #ui("Library"), #ui("+ New programme") and #ui("Edit") under
+#ui("Programmes"), and the editing buttons under #ui("Instruments"). In
+addition, the navigation bar has #ui("Groups"). Musicians see the same
+pages without these buttons.
+
+#shot("librarian-library.png", [The library as a librarian sees it: #ui("+ Add piece") at the top, #ui("Edit") on every piece and under every part.])
 
 == Words used in this chapter
 
 #table(
   columns: (auto, 1fr),
   [Word], [Meaning],
-  [Score], [A work or arrangement, e.g. "Florentiner Marsch". Holds the title, composer and other details.],
-  [Part], [One sheet of a score for one or more instruments, e.g. "2nd Trumpet in Bb". Each part has one PDF file.],
+  [Piece (score)], [A work or arrangement, e.g. "Florentiner Marsch". Holds the title, composer and other details.],
+  [Part], [One sheet of a piece for one or more instruments, e.g. "2nd Trumpet in Bb". Each part has one PDF file.],
   [Instrument], [An entry of your ensemble's instrument list. Parts are tagged with instruments; groups get access by instrument.],
   [Programme], [A concert: date, title and the pieces in playing order.],
 )
@@ -25,10 +32,15 @@ together the concert programmes. All of this is under #ui("Manage").
 Set up the instrument list once, before adding music. Use one entry per
 instrument as your ensemble names it, e.g. "Trumpet", "Flute", "Horn".
 
-+ Go to #ui("Manage"). The *Instruments* box is on the right.
-+ Type the instrument (e.g. "Trumpet") and, optionally, its family
-  (e.g. "Brass").
-+ Click #ui("Add").
++ Click #ui("Instruments") in the navigation bar.
++ Under *Add an instrument*, type the instrument (e.g. "Trumpet") and,
+  optionally, its family (e.g. "Brass").
++ Click #ui("+ Add").
+
+The list is sorted by family. To correct a name or a family, click
+#ui("Edit") next to the instrument, change it and click #ui("Save").
+
+#shot("instruments.png", [The instrument list, sorted by family, with the buttons for librarians.])
 
 #tip[
   Keep the list short and consistent: "Trumpet" for all trumpet parts, not
@@ -36,52 +48,78 @@ instrument as your ensemble names it, e.g. "Trumpet", "Flute", "Horn".
   misspelled duplicate would hide parts from the trumpet players.
 ]
 
-An instrument that is still used by parts cannot be deleted; tag those
-parts with another instrument first.
+#ui("Delete") removes an instrument. An instrument that is still used by
+parts cannot be deleted; Musicus tells you so. Tag those parts with another
+instrument first. Musicians see this list too, without the buttons.
 
 == Adding a piece <scores>
 
-=== 1. Create the score
+In the #ui("Library"), click #ui("+ Add piece"). Musicus guides you through
+two steps, shown at the top of the page.
 
-+ In #ui("Manage"), type the title (and the composer, if you like) into the
-  *Scores* box and click #ui("Add score").
-+ The score page opens. Fill in what you know: subtitle, composer, arranger,
-  genre (e.g. "March"), tags separated by commas (e.g. "Christmas,
-  Encore") and notes for other librarians.
-+ Click #ui("Save").
+=== Step 1: Details
 
-Tags and genre are searchable. Musicians can, for example, type "encore" to
+Fill in what you know: the *title* (the only required field), subtitle,
+composer, arranger, genre (e.g. "March"), tags separated by commas (e.g.
+"Christmas, Encore") and notes for other librarians. Then click
+#ui("Next: parts ›").
+
+#shot("add-piece-details.png", [Step 1: the details of the piece.])
+
+Genre and tags are searchable. Musicians can, for example, type "encore" to
 find all encore pieces.
 
-=== 2. Add the parts
+=== Step 2: Parts and PDFs
 
-Under *Parts*, type the name of the first part, e.g. "1st Trumpet in Bb",
-and click #ui("Add part"). Repeat for every part.
+Now add the parts one after another. For each part:
 
-For each part you can then set:
-
-- *Label*: the name musicians see.
+- *Label*: the name musicians see, e.g. "1st Trumpet in Bb".
 - *Voice*: the number of the voice, e.g. `1` for "1st Trumpet".
 - *Key*: for transposing instruments, e.g. `Bb` or `F`.
 - *Instruments*: tick every instrument the part is for. A part "Flute /
   Piccolo" gets both.
+- Click #ui("Choose PDF…") and select the file of this part.
 
-Click #ui("Save part") after changing a part.
+Click #ui("+ Add part"). The part appears in the list above with the state
+of its upload: first *Uploading…*, then its version and number of pages.
+The form is empty again, so you can type the next part while the upload
+is still running.
 
-#shot("manage-score.png", [A score with its details and the first of its parts.])
+#shot("add-piece-parts.png", [Step 2: three parts are uploaded, the fourth is being entered.])
+
+When all parts are there, click #ui("Finish"). Musicus waits for running
+uploads, then shows the library with the new piece highlighted.
 
 #warning[
   A part without an instrument is not visible to any group, only to
-  librarians and admins (and to groups with access to the whole score).
+  librarians and admins (and to groups with access to the whole piece).
 ]
 
-=== 3. Upload the PDF files
+You can also add a part without a PDF and upload the file later (see
+below). In the library such pieces show a note like *1 part without PDF*.
 
-Click #ui("Upload PDF…") next to a part and choose the file. After a moment
-the part shows its version, size and number of pages, and a small preview
-appears in the library.
+== Changing a piece <edit-piece>
 
-#shot("manage-part.png", [A part after the upload: version 1, size, pages; #ui("Open") shows it, #ui("Replace PDF…") uploads a corrected file.], width: 85%)
+Click #ui("Edit") on the piece in the library. The edit page shows:
+
+- *Details*: change them and click #ui("Save details").
+- *Parts*: every part with its fields, instruments and file. Change a part
+  and click #ui("Save part").
+- *Add a part*: the same form as in the guided flow.
+- *Delete piece*: see @deleting.
+
+Click #ui("Done") to return to the library.
+
+#shot("edit-piece.png", [The edit page of a piece: details at the top, then its parts.])
+
+== Changing a single part <edit-part>
+
+To work on one part only, click #ui("Edit") under its preview in the
+library. Here you change label, voice, key and instruments
+(#ui("Save part")), upload its PDF (#ui("Upload PDF…")) or replace it
+(#ui("Replace PDF…")). #ui("Open") shows the part in the reader.
+
+#shot("edit-part.png", [A corrected part: version 2 is current, version 1 is kept.])
 
 Only PDF files are accepted, up to the size your admin configured (200 MB
 by default).
@@ -90,9 +128,9 @@ by default).
 
 If a part has mistakes, click #ui("Replace PDF…") and upload the corrected
 file. Musicus keeps the old file as version 1 and shows the new one as
-version 2. Musicians who already wrote markings on the old version keep
-them, and are offered to move them onto the new version (see
-@member-versions).
+version 2; *All versions* lists them. Musicians who already wrote markings
+on the old version keep them, and are offered to move them onto the new
+version (see "When the librarian corrects a sheet" in @member).
 
 == Who may read which music <access>
 
@@ -100,7 +138,7 @@ Access is given to *groups*, never to single people. Your admin creates the
 groups and decides who is in them (@groups); you decide what each group may
 read.
 
-+ Go to #ui("Manage") → #ui("Groups & access") and select a group.
++ Click #ui("Groups") in the navigation bar and select a group.
 + Under *Instruments*, tick the instruments whose parts the group may read.
   "Trumpets" gets "Trumpet".
 + Under *Whole scores (e.g. for the conductor)*, tick works the group may
@@ -128,24 +166,28 @@ the programme before the concert and Musicus downloads all their sheets of
 it at once (@member-programmes). During the concert, they move from one
 piece to the next directly in the reader.
 
-+ In #ui("Manage"), type the title of the concert into the *Programmes* box,
-  choose the date, and click #ui("Add programme").
-+ On the programme page, pick a piece under #ui("Add a piece…") and click
-  #ui("Add"). Repeat in playing order; a piece may appear twice, e.g. as
-  encore.
++ Click #ui("Programmes") in the navigation bar, then #ui("+ New programme").
++ Enter the title of the concert, choose the date, and add notes for the
+  musicians (e.g. "Meet at 18:30 for the sound check").
++ Under *Pieces in concert order*, pick a piece under #ui("Add a piece…")
+  and click #ui("+ Add"). Repeat in playing order; a piece may appear
+  twice, e.g. as encore.
 + Change the order with #ui("↑") and #ui("↓"), remove a piece with #ui("×").
-+ Add notes for the musicians (e.g. "Meet at 18:30 for the sound check").
-+ Click #ui("Save programme").
++ Click #ui("Create programme").
 
-#shot("manage-programme.png", [The Christmas concert with four pieces and a note for the musicians.])
+To change a programme later, open it, click #ui("Edit"), and save your
+changes with #ui("Save programme").
+
+#shot("edit-programme.png", [Editing the Christmas concert: four pieces and a note for the musicians.])
 
 Musicians only see programmes in which they play at least one piece, and in
 them only their own parts.
 
-== Deleting
+== Deleting <deleting>
 
-- #ui("Delete score") removes the work with all its parts. *All musicians'
-  markings on it are deleted too.* Musicus asks before it does this.
-- #ui("Delete") on a part does the same for one part.
-- #ui("Delete programme") removes only the concert; the works stay in the
-  library.
+- #ui("Delete piece") (at the bottom of a piece's edit page) removes the
+  work with all its parts. *All musicians' markings on it are deleted too.*
+  Musicus asks before it does this.
+- #ui("Delete part") does the same for one part.
+- #ui("Delete programme") (at the bottom of a programme's edit page)
+  removes only the concert; the works stay in the library.

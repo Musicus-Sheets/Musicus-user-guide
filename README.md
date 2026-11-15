@@ -26,8 +26,8 @@ PDF looks the same everywhere.
 | `template.typ` | Layout for both outputs: `guide`, `ui` (button labels), `kbd`, `role`, `who`, `tip`/`note`/`warning`, `shot`/`shots` (screenshots), `cards`; HTML stylesheet |
 | `chapters/01-welcome.typ` | What Musicus is, roles, how access works |
 | `chapters/02-installation.typ` | Docker, direct installation, HTTPS, backups, updates, settings |
-| `chapters/03-admin.typ` | Admins: first login, accounts, groups |
-| `chapters/04-librarian.typ` | Librarians: instruments, scores, parts, uploads, access, programmes |
+| `chapters/03-admin.typ` | Admins: first login, navigation, accounts, groups |
+| `chapters/04-librarian.typ` | Librarians: instruments, adding a piece (guided flow), editing pieces and parts, uploads, access, programmes |
 | `chapters/05-member.typ` | Musicians: library, programmes, reader, annotations, account |
 | `chapters/06-faq.typ` | Questions and answers |
 | `images/` | Screenshots (generated, see below) |

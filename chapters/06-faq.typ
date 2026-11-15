@@ -8,10 +8,10 @@
 Musicus shows you a part when one of your groups may read its instrument or
 its whole score. Ask your librarian or admin to check:
 
-+ Are you in the right group? (#ui("Manage") → #ui("Groups & access"), admins only)
++ Are you in the right group? (#ui("Groups"), admins change the members)
 + May this group read the part's instrument? (same page, *Instruments*)
 + Is the part tagged with the right instrument, and does it have a file?
-  (#ui("Manage") → the score → *Parts*)
+  (in the #ui("Library"), #ui("Edit") under the part)
 
 Changes apply immediately; reload the library page.
 
@@ -50,7 +50,7 @@ next time.
 == "Someone left the ensemble."
 #who("admin")
 
-Click #ui("Disable") next to the account (#ui("Manage") → #ui("Users")). The
+Click #ui("Disable") next to the account (#ui("Users")). The
 person is logged out everywhere at once and cannot log in any more.
 
 == "Which browsers work?"

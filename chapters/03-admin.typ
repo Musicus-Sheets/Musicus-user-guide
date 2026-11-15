@@ -18,8 +18,14 @@ password with at least 8 characters, type it twice, and click
 )
 
 You land in the *Library*, which is empty for now. In the navigation bar at
-the top you find #ui("Library"), #ui("Programmes"), #ui("Manage"), your
-name (your account) and #ui("Log out").
+the top you find #ui("Library"), #ui("Programmes") and #ui("Instruments")
+like every musician, and in addition #ui("Groups") and #ui("Users"), then
+your name (your account) and #ui("Log out").
+
+There is no separate administration area. You see the same pages as the
+musicians, with extra buttons such as #ui("+ Add piece") or #ui("Edit") where
+something can be changed. Musicians see the same pages without these
+buttons.
 
 #tip(title: [Your first hour with Musicus])[
   + Add the instruments of your ensemble (@instruments).
@@ -35,7 +41,7 @@ Musicus never asks you to invent passwords for other people. You create the
 account, and the person chooses their own password through a personal
 one-time link.
 
-+ Go to #ui("Manage") → #ui("Users").
++ Click #ui("Users") in the navigation bar.
 + Under *New user*, enter a *username* (letters, digits, `.`, `_`, `-`; this
   is what the person types when logging in) and a *display name* (shown in
   lists, e.g. "Anna Berger").
@@ -44,7 +50,7 @@ one-time link.
 + A box with the link appears. Click #ui("Copy") and send the link to the
   person, by e-mail or any messenger. It is valid for 7 days.
 
-#shot("manage-users.png", [The user list with the invite link of a newly created account at the top.])
+#shot("users.png", [The user list with the invite link of a newly created account at the top.])
 
 In the list, *Invited* means the person has not chosen a password yet;
 *Active* means the account is in use.
@@ -55,7 +61,7 @@ In the list, *Invited* means the person has not chosen a password yet;
 
 == Managing accounts
 
-All actions are in the user list (#ui("Manage") → #ui("Users")):
+All actions are in the user list (#ui("Users")):
 
 #table(
   columns: (auto, 1fr),
@@ -78,7 +84,7 @@ Groups bundle musicians who need the same music, e.g. "Trumpets", "Flutes"
 or "Conductor". A musician can be in several groups, for example a
 trumpeter who also plays flugelhorn.
 
-+ Go to #ui("Manage") → #ui("Groups & access").
++ Click #ui("Groups") in the navigation bar.
 + Type a name into *New group, e.g. Trumpets* and click #ui("Add").
 + Select the group in the list on the left.
 + Under *Members*, tick everybody who belongs to it.
@@ -86,7 +92,7 @@ trumpeter who also plays flugelhorn.
   see @access).
 + Click #ui("Save").
 
-#shot("manage-groups.png", [The group "Trumpets": two members, access to all trumpet parts.])
+#shot("groups.png", [The group "Trumpets": two members, access to all trumpet parts.])
 
 Changes take effect immediately: removed members lose access with their next
 click, new members see the music right away.
