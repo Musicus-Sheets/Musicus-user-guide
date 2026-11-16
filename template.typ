@@ -274,6 +274,7 @@ kbd { font: 0.8em ui-monospace, monospace; padding: 0.05em 0.4em; border: 1px so
 #let app-license-url = "https://www.gnu.org/licenses/agpl-3.0.html"
 #let source-url = "https://github.com/Musicus-Sheets/Musicus"
 #let license-notice(kind) = [
+  © 2026 the Musicus contributors.
   This #kind is licensed under the
   #link(doc-license-url)[Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0)].
   Musicus itself is free software, licensed under the
