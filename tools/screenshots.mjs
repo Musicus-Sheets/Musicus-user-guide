@@ -338,6 +338,18 @@ await rendered();
 await t.getByText('Move them to the current version').waitFor();
 await shot(t, 'reader-version');
 
+// The system view on an 8" tablet in landscape.
+await t.setViewportSize({ width: 1280, height: 800 });
+await t.getByRole('button', { name: /Systems/ }).click();
+await t.locator('.system-view .crop').first().waitFor({ timeout: 30000 });
+await t.waitForFunction(() => [...document.querySelectorAll('.system-view .crop canvas:first-child')].every((c) => c.style.width !== ''),
+  null, { timeout: 30000 });
+await t.keyboard.press('ArrowRight');
+await t.waitForTimeout(1500);
+await shot(t, 'reader-systems');
+await t.getByRole('button', { name: /Systems/ }).click();
+await t.setViewportSize({ width: 834, height: 1112 });
+
 // The corrected part in its edit view, with both versions.
 await a.goto(`${base}/parts/${partIds['0-1']}/edit`);
 await a.getByText('All versions (2)').waitFor();

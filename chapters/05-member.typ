@@ -71,7 +71,8 @@ if the Wi-Fi in the concert hall is slow or fails.
 
 == Reading
 
-The reader shows one page at a time, as large as your screen allows.
+The reader shows one page at a time, as large as your screen allows -- or,
+in the system view (@member-systems), whole lines of music in a larger size.
 
 #shot("reader.png", [The reader on a tablet.], width: 62%)
 
@@ -83,6 +84,8 @@ The bar at the top, from left to right:
   [#ui("‹")], [Back to the programme or library.],
   [Title], [The work and your part.],
   [#ui("1 / 2")], [Current page and number of pages.],
+  [#ui("☰ Systems")], [Switches between whole pages and the system view (@member-systems).],
+  [#ui("M")], [Only in the system view: the size of the music (S, M, L, XL).],
   [#ui("✎ Draw")], [Switches to drawing (see @member-markings).],
   [#ui("☰")], [Your annotation sets.],
   [#ui("◉")], [Shows or hides your markings.],
@@ -95,6 +98,7 @@ The bar at the top, from left to right:
   columns: (auto, auto),
   [Next page], [Previous page],
   [Tap the right third of the page], [Tap the left third of the page],
+  [Swipe to the left], [Swipe to the right],
   [#kbd("→") #kbd("↓") #kbd("Page Down") #kbd("Space")], [#kbd("←") #kbd("↑") #kbd("Page Up")],
 )
 
@@ -108,6 +112,38 @@ button.
 
 The screen stays on while the reader is open, so it does not dim in the
 middle of a piece.
+
+=== System view: larger music on small tablets <member-systems>
+
+On a small tablet a whole page is often too small to read. Tap
+#ui("☰ Systems"): the reader then shows as many *whole lines of music*
+(systems) as fit on the screen at the size you chose, cut to the width of
+the music and without the page margins. Turn the tablet sideways (landscape)
+for the largest notes.
+
+#shot("reader-systems.png", [The system view on an 8-inch tablet in landscape: the last line of the previous view is repeated at the top.], width: 90%)
+
+- *Size:* choose #ui("S"), #ui("M"), #ui("L") or #ui("XL") next to the
+  switch (the smallest height of a staff: about 5, 6, 7 or 8 mm). A larger
+  size shows fewer lines at a time. If the music is wider than your screen,
+  it is shown as wide as the screen allows.
+- *Turning* works as with pages (pedal, keys, taps, swipes). When at least
+  three lines fit on the screen, the last line of a view is shown again at
+  the top of the next one, so your eyes find their place; with one or two
+  lines the next view starts with the next line.
+- *Across pages:* the end of one page and the beginning of the next can be on
+  the screen together, so there is no hurried page turn in the middle of a
+  phrase. The page counter shows the page of the top line.
+- *Title pages, text pages* and pages the system view is unsure about are
+  shown as a whole page within the sequence.
+- *Markings* work exactly as on whole pages: what you draw in the system view
+  appears on the page, and the other way round.
+- Your choice (pages or systems, and the size) is remembered for your account,
+  also on your other devices.
+
+#tip[A sheet uploaded a moment ago may still be analysed: the reader then
+shows whole pages and says so. After a few seconds the system view is
+available.]
 
 == Your markings <member-markings>
 
