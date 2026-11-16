@@ -34,7 +34,8 @@ instrument as your ensemble names it, e.g. "Trumpet", "Flute", "Horn".
 
 + Click #ui("Instruments") in the navigation bar.
 + Under *Add an instrument*, type the instrument (e.g. "Trumpet") and,
-  optionally, its family (e.g. "Brass").
+  optionally, its family (e.g. "Brass"). Families you already use are
+  suggested while you type.
 + Click #ui("+ Add").
 
 The list is sorted by family. To correct a name or a family, click
@@ -60,9 +61,24 @@ two steps, shown at the top of the page.
 === Step 1: Details
 
 Fill in what you know: the *title* (the only required field), subtitle,
-composer, arranger, genre (e.g. "March"), tags separated by commas (e.g.
-"Christmas, Encore") and notes for other librarians. Then click
-#ui("Next: parts ›").
+composer, arranger, genre (e.g. "March"), tags and notes for other
+librarians. Then click #ui("Next: parts ›").
+
+*Tags* are entered one by one: type a tag and press #kbd(",") or
+#kbd("Enter"), and it becomes a box like the tags in the library. Type the
+next one right after it. To remove a tag, click its #ui("×"), or press
+#kbd("Backspace") right behind it. With the arrow keys #kbd("←") and
+#kbd("→") you move between the boxes, e.g. to add a tag in front of
+another one. Pasting "Christmas, New Year, Encore" creates three tags at
+once. A tag you type twice is added only once.
+
+While you type, Musicus suggests tags that are already used in the library,
+so the same tag is spelt the same everywhere ("Christmas", not also
+"Xmas"). Choose one with #kbd("↓") and take it with #kbd("Enter"), or tap
+it. #kbd("Esc") closes the list; a comma or #kbd("Enter") without a chosen
+suggestion keeps what you typed.
+
+#shot("tag-suggestions.png", [Typing "chr" suggests the existing tag "Christmas".])
 
 #shot("add-piece-details.png", [Step 1: the details of the piece.])
 

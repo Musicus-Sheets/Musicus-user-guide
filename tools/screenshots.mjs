@@ -141,7 +141,10 @@ await a.getByLabel('Title', { exact: true }).fill(last.title);
 await a.getByLabel('Composer').fill(last.composer);
 await a.getByLabel('Arranger').fill(last.arranger ?? '');
 await a.getByLabel('Genre').fill(last.genre);
-await a.getByLabel('Tags (comma separated)').fill(last.tags.join(', '));
+// Tags become chips after a comma; the last one is still being typed.
+await a.locator('.tag-input input.tag-entry').click();
+await a.keyboard.type(last.tags.map((t) => `${t},`).join(''));
+await a.keyboard.type('Hymn');
 await shot(a, 'add-piece-details');
 await a.getByRole('button', { name: 'Next: parts' }).click();
 const form = a.locator('form.new-part');
@@ -193,6 +196,16 @@ await shot(a, 'librarian-library');
 await a.goto(`${base}/scores/${scoreIds[0]}/edit`);
 await a.locator('.part-editor').first().waitFor();
 await shot(a, 'edit-piece');
+// Tag suggestions: an existing tag offered while typing.
+await a.goto(`${base}/scores/${scoreIds[2]}/edit`);
+await a.locator('.tag-input .tag-chip').first().waitFor();
+await a.locator('.tag-input input.tag-entry').click();
+await a.keyboard.type('chr');
+await a.locator('ul.suggest li').first().waitFor();
+await a.keyboard.press('ArrowDown');
+const tagBox = await a.locator('.tag-input').boundingBox();
+await shot(a, 'tag-suggestions', { clip: { x: tagBox.x - 24, y: tagBox.y - 60, width: tagBox.width + 48, height: 240 } });
+await a.keyboard.press('Escape');
 await a.goto(base + '/instruments');
 await a.locator('.instrument-list .row', { hasText: 'Trumpet' }).waitFor();
 await shot(a, 'instruments');
