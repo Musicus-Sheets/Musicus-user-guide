@@ -60,9 +60,16 @@ two steps, shown at the top of the page.
 === Step 1: Details
 
 Fill in what you know: the *title* (the only required field), subtitle,
-composer, arranger, genre (e.g. "March"), tags separated by commas (e.g.
-"Christmas, Encore") and notes for other librarians. Then click
-#ui("Next: parts ›").
+composer, arranger, genre (e.g. "March"), tags and notes for other
+librarians. Then click #ui("Next: parts ›").
+
+*Tags* are entered one by one: type a tag and press #kbd(",") or
+#kbd("Enter"), and it becomes a box like the tags in the library. Type the
+next one right after it. To remove a tag, click its #ui("×"), or press
+#kbd("Backspace") right behind it. With the arrow keys #kbd("←") and
+#kbd("→") you move between the boxes, e.g. to add a tag in front of
+another one. Pasting "Christmas, New Year, Encore" creates three tags at
+once. A tag you type twice is added only once.
 
 #shot("add-piece-details.png", [Step 1: the details of the piece.])
 

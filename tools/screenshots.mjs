@@ -141,7 +141,10 @@ await a.getByLabel('Title', { exact: true }).fill(last.title);
 await a.getByLabel('Composer').fill(last.composer);
 await a.getByLabel('Arranger').fill(last.arranger ?? '');
 await a.getByLabel('Genre').fill(last.genre);
-await a.getByLabel('Tags (comma separated)').fill(last.tags.join(', '));
+// Tags become chips after a comma; the last one is still being typed.
+await a.locator('.tag-input input.tag-entry').click();
+await a.keyboard.type(last.tags.map((t) => `${t},`).join(''));
+await a.keyboard.type('Hymn');
 await shot(a, 'add-piece-details');
 await a.getByRole('button', { name: 'Next: parts' }).click();
 const form = a.locator('form.new-part');
