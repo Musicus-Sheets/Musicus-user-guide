@@ -34,7 +34,8 @@ instrument as your ensemble names it, e.g. "Trumpet", "Flute", "Horn".
 
 + Click #ui("Instruments") in the navigation bar.
 + Under *Add an instrument*, type the instrument (e.g. "Trumpet") and,
-  optionally, its family (e.g. "Brass").
+  optionally, its family (e.g. "Brass"). Families you already use are
+  suggested while you type.
 + Click #ui("+ Add").
 
 The list is sorted by family. To correct a name or a family, click
@@ -70,6 +71,14 @@ next one right after it. To remove a tag, click its #ui("×"), or press
 #kbd("→") you move between the boxes, e.g. to add a tag in front of
 another one. Pasting "Christmas, New Year, Encore" creates three tags at
 once. A tag you type twice is added only once.
+
+While you type, Musicus suggests tags that are already used in the library,
+so the same tag is spelt the same everywhere ("Christmas", not also
+"Xmas"). Choose one with #kbd("↓") and take it with #kbd("Enter"), or tap
+it. #kbd("Esc") closes the list; a comma or #kbd("Enter") without a chosen
+suggestion keeps what you typed.
+
+#shot("tag-suggestions.png", [Typing "chr" suggests the existing tag "Christmas".])
 
 #shot("add-piece-details.png", [Step 1: the details of the piece.])
 
