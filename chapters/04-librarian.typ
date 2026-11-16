@@ -169,6 +169,34 @@ version 2; *All versions* lists them. Musicians who already wrote markings
 on the old version keep them, and are offered to move them onto the new
 version (see "When the librarian corrects a sheet" in @member).
 
+=== Checking the lines of music for the system view <edit-systems>
+
+For the system view (@member-systems) Musicus finds the lines of music
+(systems) on every page by itself, a few seconds after the upload. Pages it
+is unsure about are shown whole. If a line is cut in the wrong place, two
+lines are joined, or a title is shown as music, click #ui("Edit systems") on
+the part's edit page.
+
+#shot("layout-editor.png", [Checking the systems of a part: one coloured band per line of music, red cut lines between them.])
+
+Each coloured band is what the system view shows as one piece. On each page:
+
+#table(
+  columns: (auto, 1fr),
+  [Control], [What it does],
+  [Red line], [A cut between two bands. Drag it up or down (or click it and use the arrow keys).],
+  [#ui("×") on a line], [Removes the cut: the bands above and below become one.],
+  [#ui("Split")], [Cuts a band in the middle; then drag the new line to the right place.],
+  [Kind menu], [#ui("System") (music), #ui("Header (title)") (shown with the first page), #ui("Footer"), #ui("Hidden") (never shown).],
+  [#ui("Show this page as a whole page")], [The system view shows this page whole, e.g. a page with an unusual layout.],
+  [#ui("Save page")], [Saves the page. Every musician's system view follows it at once.],
+  [#ui("Reset to automatic")], [Throws your changes away and uses the automatic detection again.],
+)
+
+Move between the pages with #ui("‹ Previous page") and #ui("Next page ›").
+Your corrections belong to this file: when you upload a corrected PDF, its
+pages are detected anew.
+
 == Who may read which music <access>
 
 Access is given to *groups*, never to single people. Your admin creates the

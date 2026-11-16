@@ -350,6 +350,12 @@ await shot(t, 'reader-systems');
 await t.getByRole('button', { name: /Systems/ }).click();
 await t.setViewportSize({ width: 834, height: 1112 });
 
+// The system editor of the corrected part (librarian).
+await a.goto(`${base}/parts/${partIds['0-1']}/systems`);
+await a.locator('.layout-overlay .band').first().waitFor({ timeout: 30000 });
+await a.waitForTimeout(800);
+await shot(a, 'layout-editor');
+
 // The corrected part in its edit view, with both versions.
 await a.goto(`${base}/parts/${partIds['0-1']}/edit`);
 await a.getByText('All versions (2)').waitFor();
