@@ -117,27 +117,32 @@ middle of a piece.
 
 On a small tablet a whole page is often too small to read. Tap
 #ui("☰ Systems"): the reader then shows as many *whole lines of music*
-(systems) as fit on the screen at the size you chose, cut to the width of
-the music and without the page margins. Turn the tablet sideways (landscape)
-for the largest notes.
+(systems) as fit on the screen at the size you chose. You still see your
+original sheet, just a section of it: from the first line shown to the last,
+with everything in between, cut to the width of the music. The view always
+starts and ends with a whole line, never in the middle of one. Turn the
+tablet sideways (landscape) for the largest notes.
 
 #shot("reader-systems.png", [The system view on an 8-inch tablet in landscape: the last line of the previous view is repeated at the top.], width: 90%)
 
 - *Size:* choose #ui("S"), #ui("M"), #ui("L") or #ui("XL") next to the
   switch (the smallest height of a staff: about 5, 6, 7 or 8 mm). A larger
-  size shows fewer lines at a time. If the music is wider than your screen,
-  it is shown as wide as the screen allows.
+  size shows fewer lines at a time. The size stays the same from view to view.
+  If the music is wider than your screen, it is shown as wide as the screen
+  allows.
 - *Turning* works as with pages (pedal, keys, taps, swipes). When at least
   three lines fit on the screen, the last line of a view is shown again at
   the top of the next one, so your eyes find their place; with one or two
   lines the next view starts with the next line.
 - *Across pages:* the end of one page and the beginning of the next can be on
   the screen together, so there is no hurried page turn in the middle of a
-  phrase. The page counter shows the page of the top line.
+  phrase. A thin line marks where the next page begins. The page counter shows
+  the page of the top line.
 - *Title pages, text pages* and pages the system view is unsure about are
   shown as a whole page within the sequence.
 - *Markings* work exactly as on whole pages: what you draw in the system view
-  appears on the page, and the other way round.
+  appears on the page, and the other way round. A line drawn across several
+  lines of music stays one straight line (it ends at the bottom of a page).
 - Your choice (pages or systems, and the size) is remembered for your account,
   also on your other devices.
 
