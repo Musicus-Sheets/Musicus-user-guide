@@ -184,7 +184,7 @@ Each coloured band is what the system view shows as one piece. On each page:
 #table(
   columns: (auto, 1fr),
   [Control], [What it does],
-  [Red line], [A cut between two bands. Drag it up or down (or click it and use the arrow keys).],
+  [Red line], [A cut between two bands. Drag it up or down (or click it and use the arrow keys). A line you moved is where the system view starts or ends: drag the top line of a page to the top edge, and the view shows the empty paper above the music too.],
   [#ui("×") on a line], [Removes the cut: the bands above and below become one.],
   [#ui("Split")], [Cuts a band in the middle; then drag the new line to the right place.],
   [Kind menu], [#ui("System") (music), #ui("Header (title)") (shown with the first page), #ui("Footer"), #ui("Hidden") (never shown).],
