@@ -7,7 +7,8 @@
 // (`npm install playwright && npx playwright install chromium`).
 
 import { chromium } from 'playwright';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const [inviteUrl, sheetsDir, outDir] = process.argv.slice(2);
@@ -399,6 +400,55 @@ await ap.locator('.picker-panel').getByRole('combobox').fill('wood');
 await ap.locator('.picker-panel').getByRole('option', { name: /Piccolo/ }).click();
 await shot(ap, 'phone-picker');
 await ap.keyboard.press('Escape');
+
+// --- Librarian: importing an archive folder ---------------------------------
+// A small archive with German names; the sample sheets get a tag appended so
+// they are new content (not duplicates of the library).
+const archive = join(mkdtempSync(join(tmpdir(), 'musicus-guide-')), 'Notenarchiv');
+const folders = {
+  'Märsche/0510 Alte Kameraden - Carl Teike': ['Partitur', 'Direktion', 'Klarinette 1 in B', 'Klar 2 in B', 'Trompete 1+2', 'Posaune'],
+  'Polkas/0511 Böhmischer Traum - Norbert Gälle': ['Flöte', 'Flügelhorn 1 in B', 'Tenorhorn', 'Tuba'],
+  'Märsche/0112 Florentiner Marsch - Julius Fučík': ['Pikkolo'],
+};
+let n = 0;
+for (const [dir, parts] of Object.entries(folders)) {
+  mkdirSync(join(archive, dir), { recursive: true });
+  for (const part of parts) {
+    const sheet = readFileSync(join(sheetsDir, `score${n % 4}-part${n % 5}.pdf`));
+    writeFileSync(join(archive, dir, `${part}.pdf`), Buffer.concat([sheet, Buffer.from(`\n%guide-${n}\n`)]));
+    n += 1;
+  }
+}
+writeFileSync(join(archive, 'Inventar.xlsx'), 'not a PDF');
+await a.setViewportSize({ width: 1280, height: 820 });
+await a.goto(base + '/import');
+await a.getByRole('heading', { name: 'New import' }).waitFor();
+await a.locator('input[webkitdirectory]').setInputFiles(archive);
+await a.locator('.import-summary').waitFor();
+await shot(a, 'import-new', { fullPage: true });
+await a.getByRole('button', { name: 'Upload and review' }).click();
+await a.waitForURL(/\/import\/\d+$/, { timeout: 60000 });
+await a.locator('.import-piece').first().waitFor();
+await a.waitForTimeout(1500);
+await shot(a, 'import-review', { fullPage: true });
+const unknown = a.locator('section.unknown-instruments');
+await unknown.locator('li', { hasText: '“Klar”' }).getByRole('button', { name: /^Use for/ }).click();
+await unknown.locator('li', { hasText: '“Klar”' }).waitFor({ state: 'detached' });
+await shot(a, 'import-instruments', { clip: await unknown.boundingBox() });
+for (const word of ['Partitur', 'Direktion', 'Tenor Horn']) {
+  await unknown.getByRole('button', { name: `Create instrument “${word}”` }).click();
+  await unknown.getByRole('button', { name: `Create instrument “${word}”` }).waitFor({ state: 'detached' });
+}
+const match = a.locator('.import-piece', { hasText: 'An existing piece matches' });
+await match.scrollIntoViewIfNeeded();
+await a.waitForTimeout(400);
+await shot(a, 'import-match', { clip: await match.boundingBox() });
+await match.getByLabel('Add the parts to it').check();
+await a.waitForTimeout(600);
+await a.getByRole('button', { name: /^Import all green/ }).click();
+await a.getByText(/pieces? imported\./).waitFor();
+await a.evaluate(() => window.scrollTo(0, 0));
+await shot(a, 'import-done');
 
 await browser.close();
 console.log('done', { carla, ben, tom, maria });
