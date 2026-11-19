@@ -94,20 +94,28 @@ Now add the parts one after another. For each part:
 - *Key*: for transposing instruments, choose the key from the list: B♭,
   E♭, F, C, A, D, G, E, A♭, D♭, G♭ or B♮ (H). Leave it at
   #ui("— (concert pitch)") for instruments that are not transposing.
-- *Voice*: the voice or chair, e.g. `1` for the first trumpet. Letters are
-  fine too, e.g. `1a` or `Solo`.
+- *Voices*: the voice or chair, e.g. `1` for the first trumpet. Letters are
+  fine too, e.g. `1a` or `Solo`. If one sheet holds several voices, e.g. a
+  sheet for the 1st and 2nd clarinet, enter each of them: type `1`, press
+  comma, Enter or `&`, then type `2`. Every voice becomes a box (a chip);
+  #kbd("Backspace") in the empty field removes the box before it, the #ui("×")
+  of a box removes that one. The order you enter is kept. Musicus knows
+  which voices each part contains.
 - *Custom name (optional)*: usually leave it empty (see below).
 - Click #ui("Choose PDF…") and select the file of this part.
 
-Musicus names the part after its instruments, key and voice and shows the
-name under the fields (*Shown as*) while you type:
+Musicus names the part after its instruments, key and voices and shows the
+name under the fields (*Shown as*) while you type. Several voices are joined
+with "&":
 
 #table(
   columns: (auto, auto, auto, 1fr),
-  [Instruments], [Key], [Voice], [Name],
+  [Instruments], [Key], [Voices], [Name],
   [Trumpet], [B♭], [1], [Trumpet in B♭ 1],
   [Clarinet], [B♭], [2], [Clarinet in B♭ 2],
   [Horn], [F], [3a], [Horn in F 3a],
+  [Clarinet], [B♭], [1, 2], [Clarinet in B♭ 1 & 2],
+  [Flute, Oboe], [—], [1, 2], [Flute / Oboe 1 & 2],
   [Flute, Piccolo], [—], [—], [Flute / Piccolo],
 )
 
@@ -121,7 +129,7 @@ of its upload: first *Uploading…*, then its version and number of pages.
 The form is empty again, so you can type the next part while the upload
 is still running.
 
-#shot("add-piece-parts.png", [Step 2: three parts are uploaded; the fourth will be shown as "Clarinet in B♭ 1".])
+#shot("add-piece-parts.png", [Step 2: three parts are uploaded; the fourth, one sheet for two voices, will be shown as "Clarinet in B♭ 1 & 2".])
 
 When all parts are there, click #ui("Finish"). Musicus waits for running
 uploads, then shows the library with the new piece highlighted.
@@ -140,7 +148,7 @@ Click #ui("Edit") on the piece in the library. The edit page shows:
 
 - *Details*: change them and click #ui("Save details").
 - *Parts*: every part under its name, with its instruments, fields and
-  file. Change key, voice or custom name and click #ui("Save part").
+  file. Change key, voices or custom name and click #ui("Save part").
   Instruments are saved as soon as you add or remove them.
 - *Add a part*: the same form as in the guided flow.
 - *Delete piece*: see @deleting.
@@ -152,7 +160,7 @@ Click #ui("Done") to return to the library.
 == Changing a single part <edit-part>
 
 To work on one part only, click #ui("Edit") under its preview in the
-library. Here you change key, voice and custom name (#ui("Save part")) and the
+library. Here you change key, voices and custom name (#ui("Save part")) and the
 instruments (saved at once, like on the group page), upload its PDF (#ui("Upload PDF…")) or replace it
 (#ui("Replace PDF…")). #ui("Open") shows the part in the reader.
 

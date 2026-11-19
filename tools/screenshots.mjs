@@ -109,13 +109,19 @@ for (const [u, d] of [['jonas', 'Jonas Bauer'], ['sophie', 'Sophie Wimmer'], ['l
 
 const scoreIds = [];
 const partIds = {};
-// Parts get no custom name: Musicus derives it from instrument, key and voice.
+// Parts get no custom name: Musicus derives it from instrument, key and voices.
 const partName = (p) => `${p.instrument}${p.transposition ? ` in ${p.transposition.replace('b', '♭')}` : ''}${p.voice ? ` ${p.voice}` : ''}`;
+// Voices are chips; "&" (like comma or Enter) finishes one.
+async function typeVoices(page, scope, text) {
+  await scope.locator('.field.voices input.tag-entry').click();
+  await page.keyboard.type(text);
+  await page.keyboard.press('Enter');
+}
 async function addParts(si, scoreId, which) {
   for (const pi of which) {
     const p = manifest.parts[pi];
     const part = await api('POST', `/scores/${scoreId}/parts`, admin, {
-      instrument_ids: [instruments[p.instrument]], voice: p.voice == null ? null : String(p.voice), transposition: p.transposition,
+      instrument_ids: [instruments[p.instrument]], voices: p.voice == null ? [] : [String(p.voice)], transposition: p.transposition,
     });
     partIds[`${si}-${pi}`] = part.id;
     await api('PUT', `/parts/${part.id}/file`, admin, undefined, readFileSync(join(sheetsDir, `score${si}-part${pi}.pdf`)));
@@ -142,7 +148,7 @@ await a.getByLabel('Composer').fill(last.composer);
 await a.getByLabel('Arranger').fill(last.arranger ?? '');
 await a.getByLabel('Genre').fill(last.genre);
 // Tags become chips after a comma; the last one is still being typed.
-await a.locator('.tag-input input.tag-entry').click();
+await a.locator('.field.wide .tag-input input.tag-entry').click();
 await a.keyboard.type(last.tags.map((t) => `${t},`).join(''));
 await a.keyboard.type('Hymn');
 await shot(a, 'add-piece-details');
@@ -152,15 +158,15 @@ for (const pi of [0, 1, 2]) {
   const p = manifest.parts[pi];
   await pickEntries(a, form, '+ Add instruments', [p.instrument]);
   if (p.transposition) await form.getByLabel('Key').selectOption(p.transposition);
-  if (p.voice) await form.getByLabel('Voice').fill(String(p.voice));
+  if (p.voice) await typeVoices(a, form, String(p.voice));
   await form.locator('input[type=file]').setInputFiles(join(sheetsDir, `score${lastIndex}-part${pi}.pdf`));
   await form.getByRole('button', { name: '+ Add part' }).click();
   await a.locator('.added-parts li', { hasText: partName(p) }).getByText(/Version 1/).waitFor({ timeout: 30000 });
 }
-// The next part entered, ready to be added: the name is shown live.
+// The next part entered, ready to be added: one sheet for two voices; the name is shown live.
 await pickEntries(a, form, '+ Add instruments', ['Clarinet']);
 await form.getByLabel('Key').selectOption('Bb');
-await form.getByLabel('Voice').fill('1');
+await typeVoices(a, form, '1 & 2');
 await a.evaluate(() => window.scrollTo(0, 0));
 await shot(a, 'add-piece-parts', { fullPage: true });
 await a.getByRole('button', { name: 'Finish' }).click();
@@ -198,12 +204,12 @@ await a.locator('.part-editor').first().waitFor();
 await shot(a, 'edit-piece');
 // Tag suggestions: an existing tag offered while typing.
 await a.goto(`${base}/scores/${scoreIds[2]}/edit`);
-await a.locator('.tag-input .tag-chip').first().waitFor();
-await a.locator('.tag-input input.tag-entry').click();
+await a.locator('.field.wide .tag-input .tag-chip').first().waitFor();
+await a.locator('.field.wide .tag-input input.tag-entry').click();
 await a.keyboard.type('chr');
 await a.locator('ul.suggest li').first().waitFor();
 await a.keyboard.press('ArrowDown');
-const tagBox = await a.locator('.tag-input').boundingBox();
+const tagBox = await a.locator('.field.wide .tag-input').boundingBox();
 await shot(a, 'tag-suggestions', { clip: { x: tagBox.x - 24, y: tagBox.y - 60, width: tagBox.width + 48, height: 240 } });
 await a.keyboard.press('Escape');
 await a.goto(base + '/instruments');
