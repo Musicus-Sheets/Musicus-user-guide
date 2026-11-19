@@ -128,10 +128,13 @@ async function addParts(si, scoreId, which) {
   }
 }
 const allParts = manifest.parts.map((_, i) => i);
+// Numbers of the paper folders (archive numbers), one per score of the manifest.
+const ARCHIVE = ['0112', '0087', '0231', '0405'];
 // The last score is added through the guided flow below, the others directly.
 for (const [si, s] of manifest.scores.slice(0, -1).entries()) {
   const score = await api('POST', '/scores', admin, {
     title: s.title, composer: s.composer, arranger: s.arranger ?? null, genre: s.genre, tags: s.tags,
+    archive_number: ARCHIVE[si] ?? null,
   });
   scoreIds.push(score.id);
   await addParts(si, score.id, allParts);
@@ -147,6 +150,7 @@ await a.getByLabel('Title', { exact: true }).fill(last.title);
 await a.getByLabel('Composer').fill(last.composer);
 await a.getByLabel('Arranger').fill(last.arranger ?? '');
 await a.getByLabel('Genre').fill(last.genre);
+await a.getByLabel('Archive number').fill(ARCHIVE[lastIndex] ?? '');
 // Tags become chips after a comma; the last one is still being typed.
 await a.locator('.field.wide .tag-input input.tag-entry').click();
 await a.keyboard.type(last.tags.map((t) => `${t},`).join(''));
@@ -267,7 +271,7 @@ await m.getByRole('button', { name: 'Log in' }).click();
 await m.getByText('Florentiner Marsch').first().waitFor();
 await m.waitForTimeout(1000);
 await shot(m, 'member-library');
-await m.getByPlaceholder('Search title, composer, tag…').fill('strauss');
+await m.getByPlaceholder('Search title, composer, tag, number…').fill('strauss');
 await m.waitForTimeout(900);
 await shot(m, 'member-search');
 await m.goto(base + '/programmes');

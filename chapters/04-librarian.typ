@@ -61,8 +61,13 @@ two steps, shown at the top of the page.
 === Step 1: Details
 
 Fill in what you know: the *title* (the only required field), subtitle,
-composer, arranger, genre (e.g. "March"), tags and notes for other
-librarians. Then click #ui("Next: parts ›").
+composer, arranger, genre (e.g. "March"), the *archive number*, tags and
+notes for other librarians. Then click #ui("Next: parts ›").
+
+The *archive number* is the number of the piece's folder in your paper
+archive, written as on the folder, e.g. `0304` or `A-12`. Leave it empty if
+the piece has none. Two pieces may have the same number; Musicus does not
+complain, because real archives sometimes do.
 
 *Tags* are entered one by one: type a tag and press #kbd(",") or
 #kbd("Enter"), and it becomes a box like the tags in the library. Type the
@@ -82,8 +87,12 @@ suggestion keeps what you typed.
 
 #shot("add-piece-details.png", [Step 1: the details of the piece.])
 
-Genre and tags are searchable. Musicians can, for example, type "encore" to
-find all encore pieces.
+Genre, tags and the archive number are searchable. Musicians can, for
+example, type "encore" to find all encore pieces, and you find the piece of
+folder 0304 by typing `0304` or just `304` (separators are optional too:
+`A12` finds `A-12`). The library shows the number in front of the title
+(#ui("No. 0304")); #ui("Sort by archive number") above the list orders the
+pieces by it, `28` before `304`, pieces without a number last.
 
 === Step 2: Parts and PDFs
 
