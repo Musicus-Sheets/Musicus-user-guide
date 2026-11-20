@@ -439,6 +439,22 @@ for (const word of ['Partitur', 'Direktion', 'Tenor Horn']) {
   await unknown.getByRole('button', { name: `Create instrument “${word}”` }).click();
   await unknown.getByRole('button', { name: `Create instrument “${word}”` }).waitFor({ state: 'detached' });
 }
+// One trombone sheet for both voices, also played by the euphonium.
+const trombone = a.locator('.import-parts tr', { hasText: 'Posaune.pdf' });
+await trombone.scrollIntoViewIfNeeded();
+await trombone.getByRole('combobox', { name: /^Voices of / }).fill('1, 2');
+await trombone.getByRole('combobox', { name: /^Voices of / }).press('Enter');
+await a.locator('.import-parts strong', { hasText: 'Trombone 1 & 2' }).waitFor();
+await trombone.getByRole('button', { name: '+ Add instrument' }).click();
+await a.locator('.picker-panel').getByRole('combobox').fill('euph');
+await a.locator('.picker-panel').getByRole('option', { name: /Euphonium/ }).click();
+await a.waitForTimeout(300);
+const tbox = await trombone.boundingBox();
+const pbox = await a.locator('.picker-panel').boundingBox();
+const top = Math.min(tbox.y, pbox.y) - 8;
+await shot(a, 'import-part-edit', { clip: { x: tbox.x, y: top, width: tbox.width, height: Math.max(tbox.y + tbox.height, pbox.y + pbox.height) + 8 - top } });
+await a.locator('.picker-panel').getByRole('button', { name: /^Add \d+$/ }).click();
+await a.locator('.import-parts strong', { hasText: 'Euphonium / Trombone 1 & 2' }).waitFor();
 const match = a.locator('.import-piece', { hasText: 'An existing piece matches' });
 await match.scrollIntoViewIfNeeded();
 await a.waitForTimeout(400);

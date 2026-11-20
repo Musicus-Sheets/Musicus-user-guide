@@ -285,8 +285,9 @@ are sent.
 === Checking the proposal
 
 The review shows one block per piece with its parts: a small preview of
-page 1, the file, instrument, key, voices, the name the part will get and the
-groups that will be able to read it. The colours tell you what to look at:
+page 1, the file, its instruments, key, voices, the name the part will get
+and the groups that will be able to read it. On a tablet or a narrow window
+each part is shown as a small card with the same fields. The colours tell you what to look at:
 
 - *Green*: sure. The value comes from the file name and the instrument is
   known.
@@ -299,9 +300,19 @@ groups that will be able to read it. The colours tell you what to look at:
 
 Point at a value to see where it comes from (file name, instrument
 dictionary, stored alias, library, or entered by you). Change any value
-directly in its field; the change is saved at once. Several voices are
-written as in the part's name, `1 & 2`; type `1, 2` or `1 & 2` to change
-them, or empty the field for a part without voice.
+directly in its field; the change is saved at once. Instruments and voices
+work as in the part editor:
+
+- *Instruments*: a part can have any number of instruments. Click
+  #ui("+ Add instrument") and tick every instrument to add, or click the
+  #ui("×") of an instrument to remove it. An unknown word from the file
+  name stays red when you add another instrument; confirm it under
+  *Instruments to confirm* (below).
+- *Voices*: every voice is a box (a chip). Type a voice and finish it with a
+  comma, Enter or `&`; click the #ui("×") of a voice to remove it. A part
+  without voice has no chip.
+
+#shot("import-part-edit.png", [One trombone sheet for both voices, also played by the euphonium: voices 1 and 2 as chips, Euphonium being added with #ui("+ Add instrument").])
 
 #shot("import-review.png", [The review of an import: instruments to confirm at the top, then the pieces with their parts.])
 
