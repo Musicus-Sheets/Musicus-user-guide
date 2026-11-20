@@ -7,7 +7,8 @@
 // (`npm install playwright && npx playwright install chromium`).
 
 import { chromium } from 'playwright';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const [inviteUrl, sheetsDir, outDir] = process.argv.slice(2);
@@ -128,10 +129,13 @@ async function addParts(si, scoreId, which) {
   }
 }
 const allParts = manifest.parts.map((_, i) => i);
+// Numbers of the paper folders (archive numbers), one per score of the manifest.
+const ARCHIVE = ['0112', '0087', '0231', '0405'];
 // The last score is added through the guided flow below, the others directly.
 for (const [si, s] of manifest.scores.slice(0, -1).entries()) {
   const score = await api('POST', '/scores', admin, {
     title: s.title, composer: s.composer, arranger: s.arranger ?? null, genre: s.genre, tags: s.tags,
+    archive_number: ARCHIVE[si] ?? null,
   });
   scoreIds.push(score.id);
   await addParts(si, score.id, allParts);
@@ -147,6 +151,7 @@ await a.getByLabel('Title', { exact: true }).fill(last.title);
 await a.getByLabel('Composer').fill(last.composer);
 await a.getByLabel('Arranger').fill(last.arranger ?? '');
 await a.getByLabel('Genre').fill(last.genre);
+await a.getByLabel('Archive number').fill(ARCHIVE[lastIndex] ?? '');
 // Tags become chips after a comma; the last one is still being typed.
 await a.locator('.field.wide .tag-input input.tag-entry').click();
 await a.keyboard.type(last.tags.map((t) => `${t},`).join(''));
@@ -267,7 +272,7 @@ await m.getByRole('button', { name: 'Log in' }).click();
 await m.getByText('Florentiner Marsch').first().waitFor();
 await m.waitForTimeout(1000);
 await shot(m, 'member-library');
-await m.getByPlaceholder('Search title, composer, tag…').fill('strauss');
+await m.getByPlaceholder('Search title, composer, tag, number…').fill('strauss');
 await m.waitForTimeout(900);
 await shot(m, 'member-search');
 await m.goto(base + '/programmes');
@@ -395,6 +400,71 @@ await ap.locator('.picker-panel').getByRole('combobox').fill('wood');
 await ap.locator('.picker-panel').getByRole('option', { name: /Piccolo/ }).click();
 await shot(ap, 'phone-picker');
 await ap.keyboard.press('Escape');
+
+// --- Librarian: importing an archive folder ---------------------------------
+// A small archive with German names; the sample sheets get a tag appended so
+// they are new content (not duplicates of the library).
+const archive = join(mkdtempSync(join(tmpdir(), 'musicus-guide-')), 'Notenarchiv');
+const folders = {
+  'Märsche/0510 Alte Kameraden - Carl Teike': ['Partitur', 'Direktion', 'Klarinette 1 in B', 'Klar 2 in B', 'Trompete 1+2', 'Posaune'],
+  'Polkas/0511 Böhmischer Traum - Norbert Gälle': ['Flöte', 'Flügelhorn 1 in B', 'Tenorhorn', 'Tuba'],
+  'Märsche/0112 Florentiner Marsch - Julius Fučík': ['Pikkolo'],
+};
+let n = 0;
+for (const [dir, parts] of Object.entries(folders)) {
+  mkdirSync(join(archive, dir), { recursive: true });
+  for (const part of parts) {
+    const sheet = readFileSync(join(sheetsDir, `score${n % 4}-part${n % 5}.pdf`));
+    writeFileSync(join(archive, dir, `${part}.pdf`), Buffer.concat([sheet, Buffer.from(`\n%guide-${n}\n`)]));
+    n += 1;
+  }
+}
+writeFileSync(join(archive, 'Inventar.xlsx'), 'not a PDF');
+await a.setViewportSize({ width: 1280, height: 820 });
+await a.goto(base + '/import');
+await a.getByRole('heading', { name: 'New import' }).waitFor();
+await a.locator('input[webkitdirectory]').setInputFiles(archive);
+await a.locator('.import-summary').waitFor();
+await shot(a, 'import-new', { fullPage: true });
+await a.getByRole('button', { name: 'Upload and review' }).click();
+await a.waitForURL(/\/import\/\d+$/, { timeout: 60000 });
+await a.locator('.import-piece').first().waitFor();
+await a.waitForTimeout(1500);
+await shot(a, 'import-review', { fullPage: true });
+const unknown = a.locator('section.unknown-instruments');
+await unknown.locator('li', { hasText: '“Klar”' }).getByRole('button', { name: /^Use for/ }).click();
+await unknown.locator('li', { hasText: '“Klar”' }).waitFor({ state: 'detached' });
+await shot(a, 'import-instruments', { clip: await unknown.boundingBox() });
+for (const word of ['Partitur', 'Direktion', 'Tenor Horn']) {
+  await unknown.getByRole('button', { name: `Create instrument “${word}”` }).click();
+  await unknown.getByRole('button', { name: `Create instrument “${word}”` }).waitFor({ state: 'detached' });
+}
+// One trombone sheet for both voices, also played by the euphonium.
+const trombone = a.locator('.import-parts tr', { hasText: 'Posaune.pdf' });
+await trombone.scrollIntoViewIfNeeded();
+await trombone.getByRole('combobox', { name: /^Voices of / }).fill('1, 2');
+await trombone.getByRole('combobox', { name: /^Voices of / }).press('Enter');
+await a.locator('.import-parts strong', { hasText: 'Trombone 1 & 2' }).waitFor();
+await trombone.getByRole('button', { name: '+ Add instrument' }).click();
+await a.locator('.picker-panel').getByRole('combobox').fill('euph');
+await a.locator('.picker-panel').getByRole('option', { name: /Euphonium/ }).click();
+await a.waitForTimeout(300);
+const tbox = await trombone.boundingBox();
+const pbox = await a.locator('.picker-panel').boundingBox();
+const top = Math.min(tbox.y, pbox.y) - 8;
+await shot(a, 'import-part-edit', { clip: { x: tbox.x, y: top, width: tbox.width, height: Math.max(tbox.y + tbox.height, pbox.y + pbox.height) + 8 - top } });
+await a.locator('.picker-panel').getByRole('button', { name: /^Add \d+$/ }).click();
+await a.locator('.import-parts strong', { hasText: 'Euphonium / Trombone 1 & 2' }).waitFor();
+const match = a.locator('.import-piece', { hasText: 'An existing piece matches' });
+await match.scrollIntoViewIfNeeded();
+await a.waitForTimeout(400);
+await shot(a, 'import-match', { clip: await match.boundingBox() });
+await match.getByLabel('Add the parts to it').check();
+await a.waitForTimeout(600);
+await a.getByRole('button', { name: /^Import all green/ }).click();
+await a.getByText(/pieces? imported\./).waitFor();
+await a.evaluate(() => window.scrollTo(0, 0));
+await shot(a, 'import-done');
 
 await browser.close();
 console.log('done', { carla, ben, tom, maria });

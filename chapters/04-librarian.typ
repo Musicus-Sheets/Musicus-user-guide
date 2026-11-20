@@ -61,8 +61,13 @@ two steps, shown at the top of the page.
 === Step 1: Details
 
 Fill in what you know: the *title* (the only required field), subtitle,
-composer, arranger, genre (e.g. "March"), tags and notes for other
-librarians. Then click #ui("Next: parts ›").
+composer, arranger, genre (e.g. "March"), the *archive number*, tags and
+notes for other librarians. Then click #ui("Next: parts ›").
+
+The *archive number* is the number of the piece's folder in your paper
+archive, written as on the folder, e.g. `0304` or `A-12`. Leave it empty if
+the piece has none. Two pieces may have the same number; Musicus does not
+complain, because real archives sometimes do.
 
 *Tags* are entered one by one: type a tag and press #kbd(",") or
 #kbd("Enter"), and it becomes a box like the tags in the library. Type the
@@ -82,8 +87,12 @@ suggestion keeps what you typed.
 
 #shot("add-piece-details.png", [Step 1: the details of the piece.])
 
-Genre and tags are searchable. Musicians can, for example, type "encore" to
-find all encore pieces.
+Genre, tags and the archive number are searchable. Musicians can, for
+example, type "encore" to find all encore pieces, and you find the piece of
+folder 0304 by typing `0304` or just `304` (separators are optional too:
+`A12` finds `A-12`). The library shows the number in front of the title
+(#ui("No. 0304")); #ui("Sort by archive number") above the list orders the
+pieces by it, `28` before `304`, pieces without a number last.
 
 === Step 2: Parts and PDFs
 
@@ -204,6 +213,181 @@ Each coloured band is what the system view shows as one piece. On each page:
 Move between the pages with #ui("‹ Previous page") and #ui("Next page ›").
 Your corrections belong to this file: when you upload a corrected PDF, its
 pages are detected anew.
+
+== Importing an archive <import>
+
+Do you already have your sheets as PDF files in folders on a computer? Then
+you do not have to enter piece by piece: Musicus can import a whole folder.
+It reads the archive number, title, composer, category and the parts from
+the folder and file names, shows you everything for checking, and adds
+pieces to the library only when you say so. Open #ui("Import") in the
+navigation (or #ui("Import folder") in the library).
+
+=== Preparing the folder
+
+Musicus understands the usual ways of naming files. The most common one is
+one folder per piece, optionally inside a folder per category:
+
+```
+Notenarchiv/                               ← the folder you select
+├── Märsche/                               ← category (becomes the genre)
+│   ├── 0304 Alte Kameraden - Teike/       ← [number] title [- composer]
+│   │   ├── Partitur.pdf                   ← one PDF per part
+│   │   ├── Klarinette 1 in B.pdf
+│   │   └── Trompete 1+2.pdf               ← one file for two voices
+```
+
+Part names may be German or English, in any order, abbreviated and even
+without spaces: `Klarinette 2 in B`, `Bb Clarinet II`, `Klar2B`,
+`KlarinetteEb`, `Trp 1`, `Pos. 3`. A file for several voices is read as a
+part with several voices when they are joined by `+`, `&`, `/`, a comma,
+"und" or "and": `Trompete 1+2`, `Horn 1/2`, `Flügelhorn I & II` become
+"Trumpet 1 & 2" and so on. An instrument that is named twice in a file name
+(`Klarinette Klar 1`, `Trp/Trompete 1`) is listed once. Files that are not
+PDFs are ignored.
+
+Musicus knows these structures (#ui("Structure")):
+
+#table(
+  columns: (auto, auto, 1fr),
+  [Structure], [Pattern], [Example],
+  [#ui("Folder per piece")], [`[{genre}/][{number} ]{title}[ - {composer}]/{part}.pdf`], [`Marches/0304 Radetzky March - Strauss/Clarinet 1 in Bb.pdf`],
+  [#ui("Number and part in the file name")], [`{number} {part}.pdf`], [`0304 - Trumpet 1.pdf`, `0304_Trumpet_1.pdf`, `0304 Trumpet 1.pdf`],
+  [#ui("Title and part in the file name")], [`[{number} ]{title} - {part}.pdf`], [`Radetzky March - Horn in F 1.pdf`, `0304 Radetzky March - Horn.pdf`],
+)
+
+What stands in square brackets may be missing: the category folder (it
+becomes the genre), the archive number and the composer. Spaces,
+underscores and a dash are all accepted as separators: `0304 Trumpet 1`,
+`0304_Trumpet_1` and `0304 - Trumpet 1` are read the same way. When the file names contain no title, you type it once per
+piece during the review.
+
+=== Selecting the folder
+
+Click #ui("Select folder…") and choose the archive folder, or drag the
+folder onto the dashed area. Your browser asks whether it may upload the
+files; nothing is uploaded yet at this point.
+
+#shot("import-new.png", [A selected folder: the structure Musicus recognised, the naming language and a preview of the pieces.])
+
+Musicus tries every known structure and chooses the one that fits most
+files (#ui("Structure") shows how many files each one fits); if two fit
+equally well, it takes the one that understands more part names
+completely. Below you see the *pattern* it uses; experienced users can
+change it, for example `{genre}/{number}_{title}/{part}.pdf`. The
+placeholders are `{number}`, `{title}`, `{composer}`, `{arranger}`,
+`{genre}` and `{part}`; `{*}` skips text, square brackets `[ … ]` mark an
+optional part, `/` separates folders.
+
+#tip[
+  Your archive uses its own naming? Write a pattern for it. If the files are
+  called like `0304Part06_Clarinet 2.pdf` (archive number, a running
+  counter, then the part), the pattern `{number}Part{*}_{part}.pdf` reads
+  the number 0304 and the part "Clarinet 2" and skips the counter "06".
+  The preview shows at once whether every file fits.
+]
+
+The *naming language* matters for keys. In German, "in B" means B♭, "Es" E♭
+and "H" B♮; in English, "B" is B♮. Musicus suggests the language from the
+instrument names it finds. It never invents a key: a file called
+`Klarinette 1.pdf` gets no key, and a letter that is unclear in the chosen
+language is left empty and marked for checking.
+
+The preview shows the pieces with colours (see below). When it looks
+right, click #ui("Upload and review"). Musicus first checks every file and
+uploads only files it does not have yet: a file that is already in the
+library, or twice in the folder, is skipped. If the upload is interrupted,
+open the import again and select the same folder: only the missing files
+are sent.
+
+#note[
+  Until you import them, the uploaded files are invisible to musicians.
+  Only librarians see them, and only on the import page.
+]
+
+=== Checking the proposal
+
+The review shows one block per piece with its parts: a small preview of
+page 1, the file, its instruments, key, voices, the name the part will get
+and the groups that will be able to read it. On a tablet or a narrow window
+each part is shown as a small card with the same fields. The colours tell you what to look at:
+
+- *Green*: sure. The value comes from the file name and the instrument is
+  known.
+- *Yellow*: please check. An abbreviation ("Klar"), a guessed word, an
+  unclear key, numbers that stand next to each other without `+`, `&` or
+  `/` (`Trompete 1 2`: two voices, or the second copy of the 1st trumpet?),
+  or a piece in the library that looks the same.
+- *Red*: missing or contradictory, for example an unknown instrument or a
+  missing title. A red piece cannot be imported.
+
+Point at a value to see where it comes from (file name, instrument
+dictionary, stored alias, library, or entered by you). Change any value
+directly in its field; the change is saved at once. Instruments and voices
+work as in the part editor:
+
+- *Instruments*: a part can have any number of instruments. Click
+  #ui("+ Add instrument") and tick every instrument to add, or click the
+  #ui("×") of an instrument to remove it. An unknown word from the file
+  name stays red when you add another instrument; confirm it under
+  *Instruments to confirm* (below).
+- *Voices*: every voice is a box (a chip). Type a voice and finish it with a
+  comma, Enter or `&`; click the #ui("×") of a voice to remove it. A part
+  without voice has no chip.
+
+#shot("import-part-edit.png", [One trombone sheet for both voices, also played by the euphonium: voices 1 and 2 as chips, Euphonium being added with #ui("+ Add instrument").])
+
+#shot("import-review.png", [The review of an import: instruments to confirm at the top, then the pieces with their parts.])
+
+*Instruments to confirm.* Musicus never creates instruments by itself,
+because the instrument decides who can read a part. Each unknown or
+abbreviated word is listed once: choose the instrument and click
+#ui("Use for “…”"), or create a new one with #ui("Create instrument “…”").
+Musicus remembers your choice for this and every later import, so "Klar"
+has to be explained only once.
+
+#shot("import-instruments.png", [Words to confirm: "Partitur", "Direktion" and "Tenorhorn" are not in the instrument list yet.])
+
+#tip[
+  "Partitur" (full score) and "Direktion" (conductor's part) are two
+  different instruments in Musicus, because some pieces have both. Create
+  both and grant them to the right groups (for example the conductor).
+]
+
+*A piece that already exists.* If the library already has a piece with the
+same archive number, or the same title and composer, Musicus asks you:
+#ui("Add the parts to it") or #ui("Import as a new piece").
+
+#shot("import-match.png", [Folder 0112 matches the Florentiner Marsch already in the library.])
+
+*Several pieces at once.* Tick pieces on the left to give them the same
+genre, composer or arranger. With the list above the pieces you can show
+only the pieces that need attention. To leave out a single file, untick
+#ui("Import") in its row. If the structure was recognised wrongly, click
+#ui("Change") next to the pattern and #ui("Read names again").
+
+Musicus also looks at the music itself once the upload is analysed: a file
+named as full score whose systems have only one staff, or a single part
+with four or more staves per system, is marked yellow.
+
+=== Importing and undoing
+
+Click #ui("Import piece") on a piece, or #ui("Import all green") to import
+every piece without a remark. From that moment, musicians see the parts like
+any other part. Pieces with yellow remarks wait until you have checked them
+and imported them one by one.
+
+#shot("import-done.png", [After the import: the imported pieces are marked, the rest waits.])
+
+Made a mistake? #ui("Undo import") removes the pieces the import created and
+the parts it added to existing pieces. To protect musicians' work, this is
+refused as soon as somebody has drawn on an imported part, or when an
+imported piece got other parts or is in a programme. The uploaded files
+stay on the server.
+
+Earlier imports are listed on the #ui("Import") page; #ui("Review") opens
+one again, #ui("Forget") removes the import list (imported pieces stay in
+the library).
 
 == Who may read which music <access>
 

@@ -34,8 +34,9 @@ missing, ask your librarian (see @faq).
 
 #shot("member-library.png", [The library of a trumpet player: each work with the trumpet parts.])
 
-Type into the search field to find a work by title, composer, genre, tag or
-the name of one of your parts (e.g. "trumpet 2").
+Type into the search field to find a work by title, composer, genre, tag,
+archive number (the number of the paper folder, if your librarian entered
+it) or the name of one of your parts (e.g. "trumpet 2").
 You don't need accents or complete words: "fucik" finds "Fučík", "flor"
 finds "Florentiner Marsch".
 
