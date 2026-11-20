@@ -242,11 +242,25 @@ without spaces: `Klarinette 2 in B`, `Bb Clarinet II`, `Klar2B`,
 `KlarinetteEb`, `Trp 1`, `Pos. 3`. A file for several voices is read as a
 part with several voices when they are joined by `+`, `&`, `/`, a comma,
 "und" or "and": `Trompete 1+2`, `Horn 1/2`, `Flügelhorn I & II` become
-"Trumpet 1 & 2" and so on. Files that are not PDFs are ignored.
-Musicus also knows folders without subfolders, with the title in the file
-name (`Alte Kameraden - Horn in F 1.pdf`) or with the archive number in the
-file name (`304Stimme06_Klarinette2.pdf`; the counter "Stimme06" is
-ignored, and you type the title once per piece during the review).
+"Trumpet 1 & 2" and so on. An instrument that is named twice in a file name
+(`Klarinette Klar 1`, `Trp/Trompete 1`) is listed once. Files that are not
+PDFs are ignored.
+
+Musicus knows these structures (#ui("Structure")):
+
+#table(
+  columns: (auto, auto, 1fr),
+  [Structure], [Pattern], [Example],
+  [#ui("Folder per piece")], [`[{genre}/][{number} ]{title}[ - {composer}]/{part}.pdf`], [`Marches/0304 Radetzky March - Strauss/Clarinet 1 in Bb.pdf`],
+  [#ui("Number and part in the file name")], [`{number} {part}.pdf`], [`0304 - Trumpet 1.pdf`, `0304_Trumpet_1.pdf`, `0304 Trumpet 1.pdf`],
+  [#ui("Title and part in the file name")], [`[{number} ]{title} - {part}.pdf`], [`Radetzky March - Horn in F 1.pdf`, `0304 Radetzky March - Horn.pdf`],
+)
+
+What stands in square brackets may be missing: the category folder (it
+becomes the genre), the archive number and the composer. Spaces,
+underscores and a dash are all accepted as separators: `0304 Trumpet 1`,
+`0304_Trumpet_1` and `0304 - Trumpet 1` are read the same way. When the file names contain no title, you type it once per
+piece during the review.
 
 === Selecting the folder
 
@@ -257,12 +271,21 @@ files; nothing is uploaded yet at this point.
 #shot("import-new.png", [A selected folder: the structure Musicus recognised, the naming language and a preview of the pieces.])
 
 Musicus tries every known structure and chooses the one that fits most
-files (#ui("Structure") shows how many files each one fits). Below you see
-the *pattern* it uses; experienced users can change it, for example
-`{genre}/{number}_{title}/{part}.pdf`. The placeholders are `{number}`,
-`{title}`, `{composer}`, `{arranger}`, `{genre}` and `{part}`; `{*}`
-skips text, square brackets `[ … ]` mark an optional part, `/` separates
-folders.
+files (#ui("Structure") shows how many files each one fits); if two fit
+equally well, it takes the one that understands more part names
+completely. Below you see the *pattern* it uses; experienced users can
+change it, for example `{genre}/{number}_{title}/{part}.pdf`. The
+placeholders are `{number}`, `{title}`, `{composer}`, `{arranger}`,
+`{genre}` and `{part}`; `{*}` skips text, square brackets `[ … ]` mark an
+optional part, `/` separates folders.
+
+#tip[
+  Your archive uses its own naming? Write a pattern for it. If the files are
+  called like `0304Part06_Clarinet 2.pdf` (archive number, a running
+  counter, then the part), the pattern `{number}Part{*}_{part}.pdf` reads
+  the number 0304 and the part "Clarinet 2" and skips the counter "06".
+  The preview shows at once whether every file fits.
+]
 
 The *naming language* matters for keys. In German, "in B" means B♭, "Es" E♭
 and "H" B♮; in English, "B" is B♮. Musicus suggests the language from the
