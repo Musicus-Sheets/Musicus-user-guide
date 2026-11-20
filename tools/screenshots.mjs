@@ -179,7 +179,10 @@ await a.locator('.score.focus').waitFor();
 const created = (await api('GET', '/scores', admin)).find((x) => x.title === last.title);
 scoreIds.push(created.id);
 for (const [pi, p] of manifest.parts.entries()) {
-  const part = created.parts.find((x) => x.display_name === partName(p));
+  // The API sends the components of a part name, not the name (Musicus composes it in the browser).
+  const part = created.parts.find((x) => x.instruments.some((i) => i.name === p.instrument)
+    && (x.transposition ?? null) === (p.transposition ?? null)
+    && (x.voices[0] ?? null) === (p.voice != null ? String(p.voice) : null));
   if (part) partIds[`${lastIndex}-${pi}`] = part.id;
 }
 await addParts(lastIndex, created.id, [3, 4]);
