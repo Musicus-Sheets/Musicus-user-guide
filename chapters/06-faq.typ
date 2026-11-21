@@ -57,3 +57,11 @@ person is logged out everywhere at once and cannot log in any more.
 
 Current versions of Safari (iPad, iPhone, Mac), Chrome, Edge and Firefox.
 For the screen-keeps-on function and reliable logins, use HTTPS.
+
+== "Can Musicus be shown in German?"
+
+Yes. Musicus uses the language of your browser: if German comes first among
+the browser's preferred languages, all buttons, messages and dates are
+German; otherwise English. There is no setting in Musicus; change the order
+of languages in the browser's settings. Titles, instrument names and other
+entries stay exactly as they were typed. This guide is English only for now.

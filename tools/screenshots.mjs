@@ -55,7 +55,9 @@ const shot = async (page, name, opts = {}) => {
 // --- Admin: first login through the invite link ------------------------------
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36';
 const TABLET_UA = 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
-const desktop = { viewport: { width: 1280, height: 820 }, deviceScaleFactor: 1.5, userAgent: UA };
+// The guide is English: force the English UI, whatever the machine's language (R-I18N-001).
+const EN = { locale: 'en-US' };
+const desktop = { ...EN, viewport: { width: 1280, height: 820 }, deviceScaleFactor: 1.5, userAgent: UA };
 // Screenshot of the centred login/invite card with some margin.
 async function shotCard(page, name) {
   await page.waitForTimeout(300);
@@ -290,7 +292,7 @@ await m.getByText('Logged-in devices').waitFor();
 await shot(m, 'member-account');
 
 // --- Reader on a tablet ------------------------------------------------------
-const tablet = await browser.newContext({ viewport: { width: 834, height: 1112 }, deviceScaleFactor: 1.5, userAgent: TABLET_UA });
+const tablet = await browser.newContext({ ...EN, viewport: { width: 834, height: 1112 }, deviceScaleFactor: 1.5, userAgent: TABLET_UA });
 const t = await tablet.newPage();
 t.on('dialog', (d) => d.accept('Breathe here!'));
 await t.goto(base + '/login');
@@ -376,7 +378,7 @@ await a.getByText('All versions (2)').waitFor();
 await shot(a, 'edit-part');
 
 // --- Phone ------------------------------------------------------------------
-const phone = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, userAgent: TABLET_UA.replace('iPad', 'iPhone') });
+const phone = await browser.newContext({ ...EN, viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, userAgent: TABLET_UA.replace('iPad', 'iPhone') });
 const ph = await phone.newPage();
 await ph.goto(base + '/login');
 await ph.getByLabel('Username').fill('ben');
@@ -389,7 +391,7 @@ await ph.getByRole('button', { name: 'Menu' }).click();
 await shot(ph, 'phone-menu');
 
 // The picker on a phone (as the admin).
-const adminPhone = await phone.browser().newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, userAgent: TABLET_UA.replace('iPad', 'iPhone') });
+const adminPhone = await phone.browser().newContext({ ...EN, viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, userAgent: TABLET_UA.replace('iPad', 'iPhone') });
 const ap = await adminPhone.newPage();
 await ap.goto(base + '/login');
 await ap.getByLabel('Username').fill('admin');
