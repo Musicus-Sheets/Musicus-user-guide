@@ -60,6 +60,7 @@ The defaults work for a first try. The most important settings:
   [Setting], [Meaning],
   [`MUSICUS_PUBLIC_URL`], [The address people type into their browser, e.g. `https://sheets.example.org`. Used in invite links.],
   [`MUSICUS_PORT`], [The port on this computer (default `8080`).],
+  [`MUSICUS_BIND`], [Empty (default): Musicus is reachable from every network, over IPv4 and IPv6. `127.0.0.1`: only from this computer (`127.0.0.1` and `::1`), for HTTPS through a web server on this computer as described below. An older `.env` may still say `MUSICUS_BIND=0.0.0.0`: then only IPv4 is reachable from other devices; empty the value.],
   [`MUSICUS_DOMAIN`], [Your domain name, only for the HTTPS setup below.],
   [`MUSICUS_MAX_UPLOAD_MB`], [Largest sheet file you can upload (default 200 MB).],
   [`MUSICUS_SESSION_DAYS`], [How long a device stays logged in without use (default 60 days).],
@@ -266,10 +267,13 @@ server {
 }
 ```
 
-- Write `127.0.0.1`, not `localhost`. nginx turns `localhost` into two
-  addresses (`127.0.0.1` and `::1`) and uses both. Musicus answers on both by
-  default, but older versions, a Docker port published on `127.0.0.1`, or
-  `MUSICUS_LISTEN=127.0.0.1:8080` only answer on the first.
+- With Docker, set `MUSICUS_BIND=127.0.0.1` so that only nginx can reach
+  Musicus.
+- Write `127.0.0.1` rather than `localhost`. nginx turns `localhost` into two
+  addresses (`127.0.0.1` and `::1`) and uses both. Musicus answers on both,
+  directly and with the Docker setup above, but older versions and
+  `MUSICUS_LISTEN=127.0.0.1:8080` only answer on the first, so the address
+  is the safer choice.
 - `client_max_body_size` must be at least `MUSICUS_MAX_UPLOAD_MB`; otherwise
   nginx refuses uploads larger than 1 MB.
 - Musicus needs no other headers. Set `X-Forwarded-For` to `$remote_addr`
