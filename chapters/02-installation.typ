@@ -243,6 +243,54 @@ sheets.example.org {
 }
 ```
 
+*With nginx you already run:* add a site like this one (the full file with
+comments is `deploy/nginx.conf.example`), set `MUSICUS_TRUST_PROXY=true`, and
+let your usual tool add the certificate, e.g.
+`sudo certbot --nginx -d sheets.example.org`:
+
+```nginx
+server {
+    server_name sheets.example.org;
+    listen 80;
+    listen [::]:80;
+
+    client_max_body_size 200m;        # = MUSICUS_MAX_UPLOAD_MB
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_read_timeout 300s;      # time for large uploads
+        proxy_send_timeout 300s;
+    }
+}
+```
+
+- Write `127.0.0.1`, not `localhost`. nginx turns `localhost` into two
+  addresses (`127.0.0.1` and `::1`) and uses both. Musicus answers on both by
+  default, but older versions, a Docker port published on `127.0.0.1`, or
+  `MUSICUS_LISTEN=127.0.0.1:8080` only answer on the first.
+- `client_max_body_size` must be at least `MUSICUS_MAX_UPLOAD_MB`; otherwise
+  nginx refuses uploads larger than 1 MB.
+- Musicus needs no other headers. Set `X-Forwarded-For` to `$remote_addr`
+  as shown, not to `$proxy_add_x_forwarded_for`: Musicus takes the first
+  address in it to slow down password guessing.
+
+#note(title: [“502 Bad Gateway” from nginx])[
+  nginx could not reach Musicus. Look at the reason in
+  `/var/log/nginx/error.log`. A line like
+  ```
+  connect() failed (111: Connection refused) while connecting
+  to upstream, … upstream: "http://[::1]:8080/…"
+  ```
+  means that nginx tried the IPv6 address of `localhost`, where nothing
+  answers: write
+  `proxy_pass http://127.0.0.1:8080;` and reload nginx
+  (`sudo nginx -t && sudo systemctl reload nginx`). The same message with
+  `127.0.0.1` means Musicus is not running or listens on another port
+  (`systemctl status musicus` or `docker compose ps`).
+]
+
 Alternatively, Musicus can use certificate files directly:
 `--tls-cert fullchain.pem --tls-key privkey.pem`.
 
@@ -400,7 +448,7 @@ or as an option of `musicus-server serve` (e.g. `--max-upload-mb 300`).
   columns: (auto, auto, 1fr),
   [Environment variable], [Default], [Meaning],
   [`MUSICUS_DATA_DIR`], [usual folder of the system (@data-folder); `/data` in Docker], [Folder for the database and the sheet files],
-  [`MUSICUS_LISTEN`], [`0.0.0.0:8080`], [Address and port the server listens on],
+  [`MUSICUS_LISTEN`], [`[::]:8080`], [Address and port the server listens on. The default answers over IPv6 and IPv4 on every network of the computer; `127.0.0.1:8080` answers only on the computer itself],
   [`MUSICUS_WEB_DIR`], [–], [Folder of a web interface to use instead of the built-in one (only for development)],
   [`MUSICUS_PUBLIC_URL`], [`http://localhost:8080`], [Address used in invite links],
   [`MUSICUS_TLS_CERT`, `MUSICUS_TLS_KEY`], [–], [Certificate files for HTTPS without Caddy],
