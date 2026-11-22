@@ -265,6 +265,10 @@ Without Docker, repeat the build steps from @direct and restart the service.
 Musicus updates its database automatically when it starts. Make a backup
 before every update.
 
+To see which version runs, open #ui("About Musicus") (on the login page or at
+the end of your account page), or run `musicus-server --version`. Use the user
+guide of that version; its title page names the version it describes.
+
 == All settings
 
 Every setting can be given in `.env` (Docker), as an environment variable,

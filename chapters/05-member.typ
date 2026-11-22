@@ -231,7 +231,13 @@ Click your name in the navigation bar.
 - *Logged-in devices:* shows where you are logged in. Click #ui("Log out")
   next to a device you don't use any more, e.g. a lost tablet.
 
+- *About Musicus:* the link at the end of the page shows which version of
+  Musicus runs, its licence and where its source code is. The login page has
+  the same link, so you can look it up without logging in.
+
 #shot("member-account.png", [Your account: password and devices.])
+
+#shot("about.png", [About Musicus: the version that runs, licence and source code.], width: 62%)
 
 == On a phone
 

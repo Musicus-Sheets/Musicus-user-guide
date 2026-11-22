@@ -290,6 +290,9 @@ await shot(m, 'member-programme');
 await m.goto(base + '/account');
 await m.getByText('Logged-in devices').waitFor();
 await shot(m, 'member-account');
+await m.getByRole('link', { name: 'About Musicus' }).click();
+await m.locator('#about-version').getByText(/\d+\.\d+/).waitFor();
+await shotCard(m, 'about');
 
 // --- Reader on a tablet ------------------------------------------------------
 const tablet = await browser.newContext({ ...EN, viewport: { width: 834, height: 1112 }, deviceScaleFactor: 1.5, userAgent: TABLET_UA });

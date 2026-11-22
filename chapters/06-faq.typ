@@ -53,6 +53,12 @@ next time.
 Click #ui("Disable") next to the account (#ui("Users")). The
 person is logged out everywhere at once and cannot log in any more.
 
+== "Which version of Musicus do we have?"
+
+Click #ui("About Musicus") on the login page or at the end of your account
+page. It shows the version that runs on your server. Mention it when you
+report a problem, and use the user guide for that version.
+
 == "Which browsers work?"
 
 Current versions of Safari (iPad, iPhone, Mac), Chrome, Edge and Firefox.
