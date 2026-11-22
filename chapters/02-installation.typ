@@ -225,10 +225,12 @@ Alternatively, Musicus can use certificate files directly:
   real use.
 ]
 
-== Backups
+== Backups <backups>
 
 Back up two things, *in this order*: the database, then the folder `blobs`
-with the sheet files. Both can be copied while Musicus runs.
+with the sheet files. Both can be copied while Musicus runs. The `backup`
+command only copies the database; it never changes it, whichever version of
+Musicus wrote it.
 
 *With Docker:*
 
@@ -245,16 +247,55 @@ musicus-server backup --data-dir /var/lib/musicus --to /backups/musicus-2026-11-
 rsync -a /var/lib/musicus/blobs/ /backups/blobs/
 ```
 
-*To restore,* stop Musicus, delete `musicus.sqlite-wal` and
-`musicus.sqlite-shm` in the data folder if they exist, put the backup file
-there as `musicus.sqlite` (next to `blobs`), and start Musicus again.
-
 #tip[
   Sheet files never change after upload, so tools like `rsync` or `restic`
   only copy new files and backups stay fast.
 ]
 
-== Updating
+#warning(title: [Keep backups as safe as the server])[
+  Backups, the snapshots in the folder `snapshots` and the data folder itself
+  are not encrypted. They contain all sheets, every musician's markings, all
+  user names and the password hashes. Store them where only administrators
+  can read them, for example on an encrypted disk, and never in a shared or
+  public folder.
+]
+
+=== Restoring a backup <restore>
+
+Musicus must be stopped while you restore. The `restore` command checks that
+the file is a Musicus database, keeps the current database in the folder
+`snapshots` (as `replaced-<date and time>.sqlite`) and puts the backup in its
+place. The folder `blobs` is not changed: if you lost it too, copy it back
+from the same backup first (existing files there are never overwritten).
+
+*With Docker:* the backup file must be inside the data volume (for example
+`/data/backup-2026-11-15.sqlite`) or mounted into the container.
+
+```sh
+docker compose stop musicus
+docker compose run --rm musicus restore --from /data/backup-2026-11-15.sqlite
+docker compose up -d
+```
+
+*Directly installed:*
+
+```sh
+sudo systemctl stop musicus
+sudo -u musicus /opt/musicus/musicus-server restore --data-dir /var/lib/musicus \
+    --from /backups/musicus-2026-11-15.sqlite
+sudo systemctl start musicus
+```
+
+If Musicus is still running, the command refuses and changes nothing. When
+Musicus starts again it brings a backup of an older version up to date by
+itself. A backup made by a *newer* version can be restored too, but an older
+Musicus starts on it only if that version is close enough; otherwise it stops
+with a message that names the version to start.
+
+You can also restore one of the snapshots described below: pass its file,
+for example `--from /data/snapshots/20261122T143000Z-1.0.0-to-1.1.0.sqlite`.
+
+== Updating <updating>
 
 ```sh
 git pull
@@ -262,8 +303,54 @@ docker compose up -d --build        # with Docker
 ```
 
 Without Docker, repeat the build steps from @direct and restart the service.
-Musicus updates its database automatically when it starts. Make a backup
-before every update.
+Make a backup before every update (@backups).
+
+Musicus updates its database automatically when it starts. Just before, it
+saves a copy of the database, a *snapshot*, in the folder `snapshots` of the
+data folder, named after the date and time (in UTC) and the two versions,
+for example `20261122T143000Z-1.0.0-to-1.1.0.sqlite`. It keeps the three
+newest snapshots and deletes older ones. Snapshots need about as much space
+as the database (the sheet files are not copied); if the disk is too full,
+Musicus does not update and says how much space it needs.
+
+=== If an update fails <failed-update>
+
+If a database update fails, Musicus puts the snapshot back by itself, so
+your data is exactly as before the update, and stops. The log
+(`docker compose logs musicus`, or `journalctl -u musicus`) then ends with a
+message like this:
+
+```
+The database update 1.1.0 failed in its additive part and was rolled back: …
+The database was put back from the snapshot snapshots/20261122T143000Z-1.0.0-to-1.1.0.sqlite
+taken just before, so the data is unchanged (the failed state is kept as
+snapshots/failed-20261122T143000Z.sqlite for diagnosis). What to do: start the
+release that ran before, Musicus 1.0.0, again …
+```
+
+What to do:
+
++ Go back to the version named in the message: with Docker, check out that
+  version again (`git checkout v1.0.0`) and run
+  `docker compose up -d --build`; without Docker, install that version's
+  program again. Musicus works as before.
++ Report the problem with the complete message (the link is in the
+  message). The file `failed-….sqlite` helps to find the cause, but it
+  contains your data: share it only with someone you trust.
++ Wait for a fixed version and update to it as usual.
+
+The failed version does not try again by itself, even when Docker restarts
+it again and again: it stops at once with a message that says so. To let the
+same version try once more (for example after freeing disk space), run:
+
+```sh
+docker compose run --rm musicus retry-update        # with Docker
+musicus-server retry-update --data-dir /var/lib/musicus   # directly installed
+```
+
+The folder `snapshots` may also hold `failed-…` and `replaced-…` files from
+failed updates and restores. Musicus never deletes them; delete them yourself
+when you no longer need them.
 
 To see which version runs, open #ui("About Musicus") (on the login page or at
 the end of your account page), or run `musicus-server --version`. Use the user
