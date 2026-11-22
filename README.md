@@ -11,7 +11,14 @@ This repository is the submodule `docs/user-guide` of the main repository.
 
 ```sh
 ./build.sh          # → out/musicus-user-guide.html and out/musicus-user-guide.pdf
+./build.sh 1.2.0    # the same, with the release version 1.2.0 on the title page
 ```
+
+The title page names the Musicus version (`typst --input version=…`, read in
+`main.typ`): the first argument of `build.sh`, else `$MUSICUS_VERSION` (the
+guide site passes the release's version), else the workspace version of the
+main repository's `Cargo.toml` when this is its submodule, else "dev" (a
+development version).
 
 Requires `typst` (tested with 0.15; `cargo install --locked typst-cli`). The HTML
 export of Typst is still marked experimental, hence `--features html`. The
