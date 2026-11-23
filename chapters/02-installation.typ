@@ -60,7 +60,7 @@ The defaults work for a first try. The most important settings:
   [Setting], [Meaning],
   [`MUSICUS_PUBLIC_URL`], [The address people type into their browser, e.g. `https://sheets.example.org`. Used in invite links.],
   [`MUSICUS_PORT`], [The port on this computer (default `8080`).],
-  [`MUSICUS_BIND`], [Empty (default): Musicus is reachable from every network, over IPv4 and IPv6. `127.0.0.1`: only from this computer (`127.0.0.1` and `::1`), for HTTPS through a web server on this computer as described below. An older `.env` may still say `MUSICUS_BIND=0.0.0.0`: then only IPv4 is reachable from other devices; empty the value.],
+  [`MUSICUS_LOCAL_ONLY`], [Empty (default): Musicus is reachable from every network, over IPv4 and IPv6. `true`: only from this computer (`127.0.0.1` and `::1`), for HTTPS through a web server on this computer as described below. Any value counts as `true`, even `false`; leave it empty to switch it off. For other addresses see #link(<certain-addresses>)[“Only reachable on certain addresses”].],
   [`MUSICUS_DOMAIN`], [Your domain name, only for the HTTPS setup below.],
   [`MUSICUS_MAX_UPLOAD_MB`], [Largest sheet file you can upload (default 200 MB).],
   [`MUSICUS_SESSION_DAYS`], [How long a device stays logged in without use (default 60 days).],
@@ -96,6 +96,34 @@ Open this link in your browser and continue with @admin-first-login.
   There is no default password. Until somebody opens this link, nobody can
   log in, so it is safe to start Musicus before you are ready to set it up.
 ]
+
+=== Only reachable on certain addresses <certain-addresses>
+
+`MUSICUS_LOCAL_ONLY` covers the two usual cases: every address, or only
+this computer. To publish Musicus on particular addresses instead, for
+example only in the rehearsal room network, create a file
+`compose.override.yaml` next to `compose.yaml`:
+
+```yaml
+services:
+  musicus:
+    ports: !override
+      - "192.168.1.20:8080:8080"
+      - "[2001:db8::20]:8080:8080"
+```
+
+Write the addresses of this computer (IPv6 addresses in square brackets)
+and leave out `MUSICUS_LOCAL_ONLY`. Docker Compose reads the file
+automatically. `!override` (Docker Compose 2.24 or newer) is needed because
+Compose otherwise adds these lines to the ones in `compose.yaml`, and Musicus
+would still be reachable on every address.
+
+Check the result before you rely on it: `docker compose config` shows the
+`ports` Compose will use, and after `docker compose up -d`,
+`sudo ss -tlnp | grep 8080` shows the addresses the port is open on.
+
+`.env` and `compose.override.yaml` are your own files: `git pull` and
+updates never change or overwrite them.
 
 == Install directly on your computer <direct>
 
@@ -225,7 +253,7 @@ internet so that the free certificate from Let's Encrypt can be issued.
 ```sh
 MUSICUS_DOMAIN=sheets.example.org
 MUSICUS_PUBLIC_URL=https://sheets.example.org
-MUSICUS_BIND=127.0.0.1
+MUSICUS_LOCAL_ONLY=true
 MUSICUS_TRUST_PROXY=true
 ```
 
@@ -267,7 +295,7 @@ server {
 }
 ```
 
-- With Docker, set `MUSICUS_BIND=127.0.0.1` so that only nginx can reach
+- With Docker, set `MUSICUS_LOCAL_ONLY=true` so that only nginx can reach
   Musicus.
 - Write `127.0.0.1` rather than `localhost`. nginx turns `localhost` into two
   addresses (`127.0.0.1` and `::1`) and uses both. Musicus answers on both,
@@ -391,6 +419,15 @@ docker compose up -d --build        # with Docker
 Without Docker, repeat the build steps from @direct, copy the new program over
 the old one (e.g. to `/opt/musicus/`) and restart the service.
 Make a backup before every update (@backups).
+
+#warning(title: [`MUSICUS_BIND` was replaced by `MUSICUS_LOCAL_ONLY`])[
+  Earlier versions of Musicus used `MUSICUS_BIND=127.0.0.1` in `.env` to
+  keep Musicus reachable only from this computer. This setting no longer
+  exists and is ignored: without a change, Musicus becomes reachable from
+  other computers. Before updating, replace that line in `.env` with
+  `MUSICUS_LOCAL_ONLY=true`. Other values of `MUSICUS_BIND` (e.g.
+  `0.0.0.0`) can simply be deleted, or see #link(<certain-addresses>)[“Only reachable on certain addresses”].
+]
 
 Musicus updates its database automatically when it starts. Just before, it
 saves a copy of the database, a *snapshot*, in the folder `snapshots` of the
