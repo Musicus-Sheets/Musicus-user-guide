@@ -60,6 +60,7 @@ The defaults work for a first try. The most important settings:
   [Setting], [Meaning],
   [`MUSICUS_PUBLIC_URL`], [The address people type into their browser, e.g. `https://sheets.example.org`. Used in invite links.],
   [`MUSICUS_PORT`], [The port on this computer (default `8080`).],
+  [`MUSICUS_LOCAL_ONLY`], [Empty (default): Musicus is reachable from every network, over IPv4 and IPv6. `true`: only from this computer (`127.0.0.1` and `::1`), for HTTPS through a web server on this computer as described below. Any value counts as `true`, even `false`; leave it empty to switch it off. For other addresses see #link(<certain-addresses>)[“Only reachable on certain addresses”].],
   [`MUSICUS_DOMAIN`], [Your domain name, only for the HTTPS setup below.],
   [`MUSICUS_MAX_UPLOAD_MB`], [Largest sheet file you can upload (default 200 MB).],
   [`MUSICUS_SESSION_DAYS`], [How long a device stays logged in without use (default 60 days).],
@@ -95,6 +96,34 @@ Open this link in your browser and continue with @admin-first-login.
   There is no default password. Until somebody opens this link, nobody can
   log in, so it is safe to start Musicus before you are ready to set it up.
 ]
+
+=== Only reachable on certain addresses <certain-addresses>
+
+`MUSICUS_LOCAL_ONLY` covers the two usual cases: every address, or only
+this computer. To publish Musicus on particular addresses instead, for
+example only in the rehearsal room network, create a file
+`compose.override.yaml` next to `compose.yaml`:
+
+```yaml
+services:
+  musicus:
+    ports: !override
+      - "192.168.1.20:8080:8080"
+      - "[2001:db8::20]:8080:8080"
+```
+
+Write the addresses of this computer (IPv6 addresses in square brackets)
+and leave out `MUSICUS_LOCAL_ONLY`. Docker Compose reads the file
+automatically. `!override` (Docker Compose 2.24 or newer) is needed because
+Compose otherwise adds these lines to the ones in `compose.yaml`, and Musicus
+would still be reachable on every address.
+
+Check the result before you rely on it: `docker compose config` shows the
+`ports` Compose will use, and after `docker compose up -d`,
+`sudo ss -tlnp | grep 8080` shows the addresses the port is open on.
+
+`.env` and `compose.override.yaml` are your own files: `git pull` and
+updates never change or overwrite them.
 
 == Install directly on your computer <direct>
 
@@ -224,7 +253,7 @@ internet so that the free certificate from Let's Encrypt can be issued.
 ```sh
 MUSICUS_DOMAIN=sheets.example.org
 MUSICUS_PUBLIC_URL=https://sheets.example.org
-MUSICUS_BIND=127.0.0.1
+MUSICUS_LOCAL_ONLY=true
 MUSICUS_TRUST_PROXY=true
 ```
 
@@ -242,6 +271,57 @@ sheets.example.org {
     reverse_proxy 127.0.0.1:8080
 }
 ```
+
+*With nginx you already run:* add a site like this one (the full file with
+comments is `deploy/nginx.conf.example`), set `MUSICUS_TRUST_PROXY=true`, and
+let your usual tool add the certificate, e.g.
+`sudo certbot --nginx -d sheets.example.org`:
+
+```nginx
+server {
+    server_name sheets.example.org;
+    listen 80;
+    listen [::]:80;
+
+    client_max_body_size 200m;        # = MUSICUS_MAX_UPLOAD_MB
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_read_timeout 300s;      # time for large uploads
+        proxy_send_timeout 300s;
+    }
+}
+```
+
+- With Docker, set `MUSICUS_LOCAL_ONLY=true` so that only nginx can reach
+  Musicus.
+- Write `127.0.0.1` rather than `localhost`. nginx turns `localhost` into two
+  addresses (`127.0.0.1` and `::1`) and uses both. Musicus answers on both,
+  directly and with the Docker setup above, but older versions and
+  `MUSICUS_LISTEN=127.0.0.1:8080` only answer on the first, so the address
+  is the safer choice.
+- `client_max_body_size` must be at least `MUSICUS_MAX_UPLOAD_MB`; otherwise
+  nginx refuses uploads larger than 1 MB.
+- Musicus needs no other headers. Set `X-Forwarded-For` to `$remote_addr`
+  as shown, not to `$proxy_add_x_forwarded_for`: Musicus takes the first
+  address in it to slow down password guessing.
+
+#note(title: [“502 Bad Gateway” from nginx])[
+  nginx could not reach Musicus. Look at the reason in
+  `/var/log/nginx/error.log`. A line like
+  ```
+  connect() failed (111: Connection refused) while connecting
+  to upstream, … upstream: "http://[::1]:8080/…"
+  ```
+  means that nginx tried the IPv6 address of `localhost`, where nothing
+  answers: write
+  `proxy_pass http://127.0.0.1:8080;` and reload nginx
+  (`sudo nginx -t && sudo systemctl reload nginx`). The same message with
+  `127.0.0.1` means Musicus is not running or listens on another port
+  (`systemctl status musicus` or `docker compose ps`).
+]
 
 Alternatively, Musicus can use certificate files directly:
 `--tls-cert fullchain.pem --tls-key privkey.pem`.
@@ -340,6 +420,15 @@ Without Docker, repeat the build steps from @direct, copy the new program over
 the old one (e.g. to `/opt/musicus/`) and restart the service.
 Make a backup before every update (@backups).
 
+#warning(title: [`MUSICUS_BIND` was replaced by `MUSICUS_LOCAL_ONLY`])[
+  Earlier versions of Musicus used `MUSICUS_BIND=127.0.0.1` in `.env` to
+  keep Musicus reachable only from this computer. This setting no longer
+  exists and is ignored: without a change, Musicus becomes reachable from
+  other computers. Before updating, replace that line in `.env` with
+  `MUSICUS_LOCAL_ONLY=true`. Other values of `MUSICUS_BIND` (e.g.
+  `0.0.0.0`) can simply be deleted, or see #link(<certain-addresses>)[“Only reachable on certain addresses”].
+]
+
 Musicus updates its database automatically when it starts. Just before, it
 saves a copy of the database, a *snapshot*, in the folder `snapshots` of the
 data folder, named after the date and time (in UTC) and the two versions,
@@ -400,7 +489,7 @@ or as an option of `musicus-server serve` (e.g. `--max-upload-mb 300`).
   columns: (auto, auto, 1fr),
   [Environment variable], [Default], [Meaning],
   [`MUSICUS_DATA_DIR`], [usual folder of the system (@data-folder); `/data` in Docker], [Folder for the database and the sheet files],
-  [`MUSICUS_LISTEN`], [`0.0.0.0:8080`], [Address and port the server listens on],
+  [`MUSICUS_LISTEN`], [`[::]:8080`], [Address and port the server listens on. The default answers over IPv6 and IPv4 on every network of the computer; `127.0.0.1:8080` answers only on the computer itself],
   [`MUSICUS_WEB_DIR`], [–], [Folder of a web interface to use instead of the built-in one (only for development)],
   [`MUSICUS_PUBLIC_URL`], [`http://localhost:8080`], [Address used in invite links],
   [`MUSICUS_TLS_CERT`, `MUSICUS_TLS_KEY`], [–], [Certificate files for HTTPS without Caddy],
