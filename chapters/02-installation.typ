@@ -120,33 +120,68 @@ This way works on Linux and macOS. On Windows, use Docker Desktop and follow
 git clone https://github.com/NelDav/Musicus.git
 cd Musicus
 ./scripts/fetch-pdfjs.sh                                   # page display component
+rm -rf target/dx/musicus-web/release                       # leftovers of an earlier build
 dx bundle --platform web --package musicus-web --release   # web interface
-cargo build --release -p musicus-server                    # server
+cargo build --release -p musicus-server --features embed-web
 ```
+
+The result is a single file, `target/release/musicus-server`: the server
+with the web interface inside. You can copy it anywhere; it needs nothing
+else next to it.
 
 === 3. Start it
 
 ```sh
-./target/release/musicus-server serve \
-    --data-dir ./data \
-    --web-dir target/dx/musicus-web/release/web/public \
-    --public-url http://localhost:8080
+./target/release/musicus-server serve --public-url http://localhost:8080
 ```
 
 The admin link appears in the output. Open it in your browser on the same
 computer and continue with @admin-first-login. Stop the server with
 #kbd("Ctrl") + #kbd("C").
 
+=== Where Musicus keeps its data <data-folder>
+
+The first lines of the output name the data folder, for example:
+
+```
+INFO musicus_server: data folder: /home/anna/.local/share/musicus (the usual folder of this system; choose another with --data-dir)
+```
+
+Unless you choose a folder, Musicus uses the usual folder for program data
+of your system:
+
+#table(
+  columns: (auto, 1fr),
+  [System], [Data folder],
+  [Linux], [`~/.local/share/musicus` (or `$XDG_DATA_HOME/musicus` if you set that variable)],
+  [macOS], [`~/Library/Application Support/Musicus`],
+  [Windows], [`%APPDATA%\Musicus`, e.g. `C:\Users\Anna\AppData\Roaming\Musicus`],
+  [Docker], [`/data` inside the container, kept in the volume `musicus-data`],
+)
+
+To use another folder, start Musicus with `--data-dir`, e.g.
+`musicus-server serve --data-dir /srv/musicus`, or set the environment
+variable `MUSICUS_DATA_DIR`. Use the same folder for every command
+(`backup`, `restore`, `retry-update`, `create-admin`), and always set it for a
+system service.
+
+#note(title: [Upgrading from an older version])[
+  Older versions kept their data in a folder `data` inside the folder they
+  were started from. If Musicus finds a database there, it keeps using it
+  and prints a warning. To get rid of the warning, start it with
+  `--data-dir data`, or stop Musicus and move the contents of `data` into
+  the folder named above.
+]
+
 === 4. Run it permanently (Linux)
 
-To start Musicus automatically with the computer, copy the program and the
-web interface to a fixed place and register a system service:
+To start Musicus automatically with the computer, copy the program to a
+fixed place and register a system service:
 
 ```sh
 sudo useradd --system --home /var/lib/musicus musicus
 sudo mkdir -p /opt/musicus /var/lib/musicus
 sudo cp target/release/musicus-server /opt/musicus/
-sudo cp -r target/dx/musicus-web/release/web/public /opt/musicus/web
 sudo chown musicus /var/lib/musicus
 ```
 
@@ -161,7 +196,6 @@ After=network.target
 User=musicus
 ExecStart=/opt/musicus/musicus-server serve
 Environment=MUSICUS_DATA_DIR=/var/lib/musicus
-Environment=MUSICUS_WEB_DIR=/opt/musicus/web
 Environment=MUSICUS_LISTEN=127.0.0.1:8080
 Environment=MUSICUS_PUBLIC_URL=https://sheets.example.org
 Environment=MUSICUS_TRUST_PROXY=true
@@ -302,7 +336,8 @@ git pull
 docker compose up -d --build        # with Docker
 ```
 
-Without Docker, repeat the build steps from @direct and restart the service.
+Without Docker, repeat the build steps from @direct, copy the new program over
+the old one (e.g. to `/opt/musicus/`) and restart the service.
 Make a backup before every update (@backups).
 
 Musicus updates its database automatically when it starts. Just before, it
@@ -364,9 +399,9 @@ or as an option of `musicus-server serve` (e.g. `--max-upload-mb 300`).
 #table(
   columns: (auto, auto, 1fr),
   [Environment variable], [Default], [Meaning],
-  [`MUSICUS_DATA_DIR`], [`data`], [Folder for the database and the sheet files],
+  [`MUSICUS_DATA_DIR`], [usual folder of the system (@data-folder); `/data` in Docker], [Folder for the database and the sheet files],
   [`MUSICUS_LISTEN`], [`0.0.0.0:8080`], [Address and port the server listens on],
-  [`MUSICUS_WEB_DIR`], [–], [Folder of the web interface (set in Docker)],
+  [`MUSICUS_WEB_DIR`], [–], [Folder of a web interface to use instead of the built-in one (only for development)],
   [`MUSICUS_PUBLIC_URL`], [`http://localhost:8080`], [Address used in invite links],
   [`MUSICUS_TLS_CERT`, `MUSICUS_TLS_KEY`], [–], [Certificate files for HTTPS without Caddy],
   [`MUSICUS_CLIENT_CACHE`], [`none`], [`none`: browsers keep no copies of sheets. `immutable`: browsers may keep copies (faster reloads)],
