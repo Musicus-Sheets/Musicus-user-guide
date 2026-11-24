@@ -184,6 +184,32 @@ close the tab right after drawing, the last strokes are sent.
 You can draw on two devices, e.g. on your tablet in rehearsal and on your
 laptop at home. Musicus combines the changes; nothing is lost.
 
+=== When the server restarts, updates or cannot be reached <member-outage>
+
+A notice at the bottom of the screen tells you what is going on. Whatever it
+says, the sheets you have open stay readable and you can keep turning pages.
+
+- *Server is shutting down* (an update or a restart, usually announced by
+  the admin): Musicus first stops taking new markings, then sends the ones
+  you just drew to the server at once, so nothing is lost. Drawing pauses
+  (the toolbar says *Drawing paused*) until the server is back.
+- *Server is starting*: the server is coming back, sometimes with an update
+  of its data that takes a moment. Drawing stays paused; the notice
+  disappears by itself when it is ready.
+- *Server not reachable* (for example the Wi-Fi dropped): you can keep
+  drawing. Your markings stay in the open tab and are saved by themselves
+  when the connection is back; the reader says *Annotations not saved yet
+  are kept in this tab*. Keep the tab open until the status shows *Saved*;
+  the browser warns you if you try to close it before.
+- *Musicus has been updated*: a new version runs on the server. Musicus
+  switches to it by itself, but never while a part is open in the reader:
+  it waits until you leave the reader (and until nothing is being saved or
+  typed). #ui("Reload now") switches at once.
+
+In the rare case that the server refuses markings (for example because it
+was updated meanwhile), the reader says *These annotations couldn't be
+saved* and keeps them in the tab; tell the admin.
+
 === Privacy
 
 Your markings are visible to *nobody but you*: not to other musicians, not

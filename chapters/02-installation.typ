@@ -437,6 +437,16 @@ newest snapshots and deletes older ones. Snapshots need about as much space
 as the database (the sheet files are not copied); if the disk is too full,
 Musicus does not update and says how much space it needs.
 
+Open browsers notice the update by themselves (@member-outage): when
+Musicus stops, it tells them first and gives them a few seconds
+(`MUSICUS_SHUTDOWN_GRACE_SECS`, default 3) to send markings that are not
+saved yet; meanwhile drawing pauses. While Musicus starts (and updates its
+database) the browsers show *Server is starting*, and once it is ready they
+switch to the new version as soon as nobody is reading or drawing. So you
+can update between rehearsals without asking everybody to close Musicus.
+During a long database update the Docker health check shows the container
+as unhealthy until it is ready; that is expected.
+
 === If an update fails <failed-update>
 
 If a database update fails, Musicus puts the snapshot back by itself, so
@@ -498,6 +508,7 @@ or as an option of `musicus-server serve` (e.g. `--max-upload-mb 300`).
   [`MUSICUS_MAX_UPLOAD_MB`], [`200`], [Largest upload],
   [`MUSICUS_SESSION_DAYS`], [`60`], [Days a device stays logged in without use],
   [`MUSICUS_TRUST_PROXY`], [`false`], [Set to `true` behind Caddy or another proxy],
+  [`MUSICUS_SHUTDOWN_GRACE_SECS`], [`3`], [Seconds open browsers get to send unsaved markings when Musicus stops (0 to 30; skipped when no browser is open). With Docker keep it below `stop_grace_period` (15 s) minus 5],
   [`MUSICUS_INSECURE_COOKIES`], [`false`], [Tests over plain HTTP only],
   [`RUST_LOG`], [`info`], [Amount of log output],
 )

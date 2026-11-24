@@ -37,9 +37,11 @@ see nor change them through Musicus.
 == "What if the Wi-Fi fails during the concert?"
 
 Every piece of a programme you opened beforehand (with the green "ready"
-message) keeps working, as long as the browser tab stays open. Markings you
-make while offline cannot be saved until the connection is back; leave the
-reader open until the status shows *Saved*.
+message) keeps working, as long as the browser tab stays open. You can keep
+drawing: the notice *Server not reachable* appears, and markings you make
+while offline stay in the tab and are saved by themselves when the
+connection is back; leave the reader open until the status shows *Saved*
+(@member-outage).
 
 == "What happens to my markings when I close the browser?"
 
