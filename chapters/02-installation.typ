@@ -97,12 +97,31 @@ Open this link in your browser and continue with @admin-first-login.
   log in, so it is safe to start Musicus before you are ready to set it up.
 ]
 
-=== Only reachable on certain addresses <certain-addresses>
+=== Your own Docker settings: `compose.override.yaml` <compose-override>
+
+`.env` holds the settings you may change at any time. A few changes go
+deeper into how Docker runs Musicus; they belong in a second file of your
+own, `compose.override.yaml` next to `compose.yaml`. Docker Compose reads it
+automatically and lays it over `compose.yaml`. Musicus ships an example with
+both cases below; copy it and remove the `# ` in front of the lines you need
+(always `services:` and `musicus:`, plus one or both blocks):
+
+```sh
+cp compose.override.example.yaml compose.override.yaml
+```
+
+Check the result before you rely on it: `docker compose config` shows the
+combined settings Compose will use. Then start as usual with
+`docker compose up -d`.
+
+`.env` and `compose.override.yaml` are your own files: `git pull` and
+updates never change or overwrite them.
+
+==== Only reachable on certain addresses <certain-addresses>
 
 `MUSICUS_LOCAL_ONLY` covers the two usual cases: every address, or only
 this computer. To publish Musicus on particular addresses instead, for
-example only in the rehearsal room network, create a file
-`compose.override.yaml` next to `compose.yaml`:
+example only in the rehearsal room network:
 
 ```yaml
 services:
@@ -113,17 +132,74 @@ services:
 ```
 
 Write the addresses of this computer (IPv6 addresses in square brackets)
-and leave out `MUSICUS_LOCAL_ONLY`. Docker Compose reads the file
-automatically. `!override` (Docker Compose 2.24 or newer) is needed because
-Compose otherwise adds these lines to the ones in `compose.yaml`, and Musicus
-would still be reachable on every address.
+and leave `MUSICUS_LOCAL_ONLY` empty. `!override` (Docker Compose 2.24 or
+newer) is needed because Compose otherwise adds these lines to the ones in
+`compose.yaml`, and Musicus would still be reachable on every address.
 
-Check the result before you rely on it: `docker compose config` shows the
-`ports` Compose will use, and after `docker compose up -d`,
-`sudo ss -tlnp | grep 8080` shows the addresses the port is open on.
+After `docker compose up -d`, `sudo ss -tlnp | grep 8080` shows the
+addresses the port is open on.
 
-`.env` and `compose.override.yaml` are your own files: `git pull` and
-updates never change or overwrite them.
+==== Data in a folder of your own <data-own-folder>
+
+By default Docker keeps the data in the volume `musicus-data`, which you
+only reach through Docker. If you prefer a normal folder, for example to
+include it in the backup of the whole computer, let Musicus run as your own
+user and give it the folder `data`:
+
+```yaml
+services:
+  musicus:
+    user: "1000:1000"
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+        bind:
+          create_host_path: false
+```
+
+Replace `1000:1000` with your user and group number: the output of
+`id -u` and `id -g`. Never use `0`, which is the administrator `root`. The
+files in `data` then belong to you, and you need no `sudo` to copy them.
+
+Create the folder before the first start:
+
+```sh
+mkdir data
+```
+
+Without it Docker refuses to start with "bind source path does not exist".
+That is on purpose (`create_host_path: false`): otherwise Docker would
+create the folder for `root`, and Musicus could not write to it.
+
+#warning(title: [Choose the user once])[
+  Musicus only runs if it may write to the folder. If you change the
+  `user:` line later, first give the folder to the new user:
+  `sudo chown -R <user>:<group> data`. The same applies the other way: the
+  volume `musicus-data` belongs to Musicus' own user (number 65532), so do
+  not add a `user:` line while you still use the volume.
+]
+
+To move existing data from the volume into the folder:
+
+```sh
+docker compose stop musicus
+mkdir data
+docker run --rm -v musicus_musicus-data:/from -v "$PWD/data":/to alpine cp -a /from/. /to/
+sudo chown -R "$(id -u):$(id -g)" data
+```
+
+Then create `compose.override.yaml` as above and start with
+`docker compose up -d`. The volume stays as it was; once everything works,
+you can delete it with `docker volume rm musicus_musicus-data`.
+
+#note(title: [Why not simply as `root`?])[
+  Inside the container Musicus does not run as `root` but as an unprivileged
+  user, so a fault in Musicus cannot take over the container. This user
+  (number 65532) exists only inside the container; on your computer the
+  files would belong to a stranger. With `user:` Musicus runs as you
+  instead, still not as `root`.
+]
 
 == Install directly on your computer <direct>
 
@@ -185,7 +261,7 @@ of your system:
   [Linux], [`~/.local/share/musicus` (or `$XDG_DATA_HOME/musicus` if you set that variable)],
   [macOS], [`~/Library/Application Support/Musicus`],
   [Windows], [`%APPDATA%\Musicus`, e.g. `C:\Users\Anna\AppData\Roaming\Musicus`],
-  [Docker], [`/data` inside the container, kept in the volume `musicus-data`],
+  [Docker], [`/data` inside the container, kept in the volume `musicus-data` (or in a folder of your own, @data-own-folder)],
 )
 
 To use another folder, start Musicus with `--data-dir`, e.g.
@@ -353,6 +429,10 @@ docker compose exec musicus musicus-server backup --to /data/backup-2026-11-15.s
 docker run --rm -v musicus_musicus-data:/data -v "$PWD":/backup alpine \
     tar czf /backup/musicus-2026-11-15.tgz -C /data backup-2026-11-15.sqlite blobs
 ```
+
+With the data in a folder of your own (@data-own-folder), the backup is
+`data/backup-2026-11-15.sqlite`; copy it and `data/blobs` like any other
+files.
 
 *Directly installed:*
 
