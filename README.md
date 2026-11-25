@@ -1,6 +1,6 @@
 # Musicus – user guide
 
-The user guide of [Musicus](https://github.com/NelDav/Musicus): installation
+The user guide of [Musicus](https://github.com/Musicus-Sheets/Musicus): installation
 (Docker or directly on a computer) and how admins, librarians and musicians
 use it. Written in [Typst](https://typst.app); one source produces an HTML page
 (main format, self-contained, with navigation sidebar and dark mode) and a PDF.

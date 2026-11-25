@@ -40,7 +40,7 @@ You can install Musicus in two ways:
 === 1. Get Musicus
 
 ```sh
-git clone https://github.com/NelDav/Musicus.git
+git clone https://github.com/Musicus-Sheets/Musicus.git
 cd Musicus
 ```
 
@@ -222,7 +222,7 @@ This way works on Linux and macOS. On Windows, use Docker Desktop and follow
 === 2. Build Musicus
 
 ```sh
-git clone https://github.com/NelDav/Musicus.git
+git clone https://github.com/Musicus-Sheets/Musicus.git
 cd Musicus
 ./scripts/fetch-pdfjs.sh                                   # page display component
 rm -rf target/dx/musicus-web/release                       # leftovers of an earlier build
